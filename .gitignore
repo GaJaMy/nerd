@@ -51,7 +51,9 @@ Desktop.ini
 *.sw?
 
 # Local AI/tooling state
+AGENTS.md
 .codex/
 .claude/
 
 .agents/context
+.agents/skills/
