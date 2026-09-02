@@ -1,0 +1,57 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+storybook-static/
+
+# Tool caches and generated temp files
+.cache/
+.tanstack/
+.turbo/
+.vite/
+.vite-inspect/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local env files
+.env
+.env.*
+!.env.example
+*.local
+
+# Local editor and OS files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local AI/tooling state
+.codex/
+.claude/
+
+.agents/context

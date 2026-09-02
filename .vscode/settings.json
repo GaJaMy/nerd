@@ -1,0 +1,15 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "files.readonlyInclude": {
+    "**/app/routeTree.gen.ts": true
+  },
+  "files.watcherExclude": {
+    "**/app/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/app/routeTree.gen.ts": true
+  },
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
