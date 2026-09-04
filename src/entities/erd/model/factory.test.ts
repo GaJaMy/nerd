@@ -1,11 +1,11 @@
 import {
   createDefaultDisplayOptions,
-  createErdColumn,
+  createErdKey,
   createErdProject,
+  createErdRelation,
   createErdTable,
   createUniqueTablePhysicalName,
   erdTableSchema,
-  validateErdProject,
 } from './index'
 
 describe('ERD model factory', () => {
@@ -15,6 +15,7 @@ describe('ERD model factory', () => {
     expect(project).toMatchObject({
       displayOptions: createDefaultDisplayOptions(),
       id: 'project_test',
+      keys: [],
       name: '새 ERD 프로젝트',
       relations: [],
       tables: [],
@@ -44,40 +45,60 @@ describe('ERD model factory', () => {
     expect(createUniqueTablePhysicalName([table])).toBe('table_1')
   })
 
-  it('validates table and column physical name duplication', () => {
-    const idColumn = createErdColumn({
-      dataType: { name: 'BIGINT' },
-      id: 'column_id',
-      nullable: false,
-      physicalName: 'id',
-    })
-    const duplicatedIdColumn = createErdColumn({
-      dataType: { name: 'BIGINT' },
-      id: 'column_id_copy',
-      nullable: false,
-      ordinal: 1,
-      physicalName: 'ID',
-    })
-    const firstTable = createErdTable({
-      columns: [idColumn, duplicatedIdColumn],
-      id: 'table_users',
-      physicalName: 'users',
-    })
-    const duplicatedTable = createErdTable({
-      id: 'table_users_copy',
-      physicalName: 'USERS',
-    })
-    const project = createErdProject({
-      id: 'project_with_duplicates',
-      tables: [firstTable, duplicatedTable],
+  it('creates valid single-column and composite keys', () => {
+    expect(
+      createErdKey({
+        columnIds: ['column_id'],
+        id: 'key_users_primary',
+        name: 'pk_users',
+        tableId: 'table_users',
+        type: 'primary',
+      }),
+    ).toMatchObject({
+      columnIds: ['column_id'],
+      id: 'key_users_primary',
+      name: 'pk_users',
+      tableId: 'table_users',
+      type: 'primary',
     })
 
-    expect(validateErdProject(project)).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'duplicate-table-physical-name' }),
-        expect.objectContaining({ code: 'duplicate-column-physical-name' }),
-      ]),
-    )
+    expect(
+      createErdKey({
+        columnIds: ['column_tenant_id', 'column_id'],
+        id: 'key_users_unique_tenant_id',
+        tableId: 'table_users',
+        type: 'unique',
+      }),
+    ).toMatchObject({
+      columnIds: ['column_tenant_id', 'column_id'],
+      id: 'key_users_unique_tenant_id',
+      tableId: 'table_users',
+      type: 'unique',
+    })
+  })
+
+  it('creates valid relations with column mappings', () => {
+    expect(
+      createErdRelation({
+        cardinality: 'one-to-many',
+        columnMappings: [
+          {
+            ordinal: 0,
+            sourceColumnId: 'column_orders_user_id',
+            targetColumnId: 'column_users_id',
+          },
+        ],
+        id: 'relation_orders_users',
+        sourceTableId: 'table_orders',
+        targetTableId: 'table_users',
+      }),
+    ).toMatchObject({
+      cardinality: 'one-to-many',
+      hidden: false,
+      id: 'relation_orders_users',
+      sourceTableId: 'table_orders',
+      targetTableId: 'table_users',
+    })
   })
 
   it('rejects table physical names that are not MySQL-safe identifiers', () => {

@@ -1,3 +1,4 @@
+export * from './editor-actions'
 export * from './factory'
 export * from './schema'
 export * from './use-erd-editor-store'

@@ -52,6 +52,16 @@ export const erdColumnSchema = z.object({
   physicalName: mysqlIdentifierSchema,
 })
 
+export const erdKeyTypeSchema = z.enum(['primary', 'foreign', 'unique'])
+
+export const erdKeySchema = z.object({
+  columnIds: z.array(z.string().min(1)).min(1),
+  id: z.string().min(1),
+  name: mysqlIdentifierSchema.optional(),
+  tableId: z.string().min(1),
+  type: erdKeyTypeSchema,
+})
+
 export const relationCardinalitySchema = z.enum(['one-to-one', 'one-to-many'])
 
 export const relationColumnMappingSchema = z.object({
@@ -85,6 +95,7 @@ export const erdProjectSchema = z.object({
   createdAt: z.string().datetime().optional(),
   displayOptions: displayOptionsSchema,
   id: z.string().min(1),
+  keys: z.array(erdKeySchema),
   name: z.string().trim().min(1),
   relations: z.array(erdRelationSchema),
   tables: z.array(erdTableSchema),
@@ -97,6 +108,8 @@ export type CanvasSize = z.infer<typeof canvasSizeSchema>
 export type CanvasViewport = z.infer<typeof canvasViewportSchema>
 export type DisplayOptions = z.infer<typeof displayOptionsSchema>
 export type ErdColumn = z.infer<typeof erdColumnSchema>
+export type ErdKey = z.infer<typeof erdKeySchema>
+export type ErdKeyType = z.infer<typeof erdKeyTypeSchema>
 export type ErdProject = z.infer<typeof erdProjectSchema>
 export type ErdRelation = z.infer<typeof erdRelationSchema>
 export type ErdTable = z.infer<typeof erdTableSchema>

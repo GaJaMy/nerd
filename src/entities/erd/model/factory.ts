@@ -1,21 +1,28 @@
 ﻿import {
   displayOptionsSchema,
   erdColumnSchema,
+  erdKeySchema,
   erdProjectSchema,
+  erdRelationSchema,
   erdTableSchema,
   type CanvasPosition,
   type CanvasViewport,
   type DisplayOptions,
   type ErdColumn,
+  type ErdKey,
+  type ErdKeyType,
   type ErdProject,
   type ErdRelation,
   type ErdTable,
   type MysqlDataType,
+  type RelationCardinality,
+  type RelationColumnMapping,
 } from './schema'
 
 export type CreateErdProjectInput = {
   displayOptions?: DisplayOptions
   id?: string
+  keys?: ErdKey[]
   name?: string
   relations?: ErdRelation[]
   tables?: ErdTable[]
@@ -43,6 +50,24 @@ export type CreateErdColumnInput = {
   physicalName: string
 }
 
+export type CreateErdKeyInput = {
+  columnIds: string[]
+  id?: string
+  name?: string
+  tableId: string
+  type: ErdKeyType
+}
+
+export type CreateErdRelationInput = {
+  cardinality: RelationCardinality
+  columnMappings: RelationColumnMapping[]
+  hidden?: boolean
+  id?: string
+  label?: string
+  sourceTableId: string
+  targetTableId: string
+}
+
 export function createDefaultDisplayOptions(): DisplayOptions {
   return displayOptionsSchema.parse({
     showComment: true,
@@ -65,6 +90,7 @@ export function createErdProject(input: CreateErdProjectInput = {}): ErdProject 
   return erdProjectSchema.parse({
     displayOptions: input.displayOptions ?? createDefaultDisplayOptions(),
     id: input.id ?? createId('project'),
+    keys: input.keys ?? [],
     name: input.name ?? '새 ERD 프로젝트',
     relations: input.relations ?? [],
     tables: input.tables ?? [],
@@ -94,6 +120,28 @@ export function createErdColumn(input: CreateErdColumnInput): ErdColumn {
     ...(input.comment === undefined ? {} : { comment: input.comment }),
     ...(input.defaultValue === undefined ? {} : { defaultValue: input.defaultValue }),
     ...(input.logicalName === undefined ? {} : { logicalName: input.logicalName }),
+  })
+}
+
+export function createErdKey(input: CreateErdKeyInput): ErdKey {
+  return erdKeySchema.parse({
+    columnIds: input.columnIds,
+    id: input.id ?? createId('key'),
+    tableId: input.tableId,
+    type: input.type,
+    ...(input.name === undefined ? {} : { name: input.name }),
+  })
+}
+
+export function createErdRelation(input: CreateErdRelationInput): ErdRelation {
+  return erdRelationSchema.parse({
+    cardinality: input.cardinality,
+    columnMappings: input.columnMappings,
+    hidden: input.hidden ?? false,
+    id: input.id ?? createId('relation'),
+    sourceTableId: input.sourceTableId,
+    targetTableId: input.targetTableId,
+    ...(input.label === undefined ? {} : { label: input.label }),
   })
 }
 
