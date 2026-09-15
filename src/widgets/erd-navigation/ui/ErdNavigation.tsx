@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useErdEditorStore, type DisplayOptions } from '@/entities/erd/model'
 
 const options: Array<[keyof DisplayOptions, string]> = [
-  ['showLogicalName', '논리명 표시'],
-  ['showPhysicalName', '물리명 표시'],
   ['showDataType', '데이터 타입 표시'],
   ['showComment', '코멘트 표시'],
 ]
@@ -58,6 +56,29 @@ export function ErdNavigation({ onFocus }: { onFocus: (tableId: string) => void 
       {!tables.length && <p className="text-sm text-zinc-500">검색 결과가 없습니다.</p>}
       <fieldset className="space-y-1 rounded border p-3">
         <legend>표시 옵션</legend>
+        <label className="block text-sm">
+          이름 표시
+          <select
+            className="my-2 block w-full rounded border p-2"
+            value={
+              store.project.displayOptions.showLogicalName
+                ? store.project.displayOptions.showPhysicalName
+                  ? 'both'
+                  : 'logical'
+                : 'physical'
+            }
+            onChange={(event) =>
+              store.patchDisplayOptions({
+                showLogicalName: event.target.value !== 'physical',
+                showPhysicalName: event.target.value !== 'logical',
+              })
+            }
+          >
+            <option value="logical">논리명</option>
+            <option value="physical">물리명</option>
+            <option value="both">논리·물리 (모두 표시)</option>
+          </select>
+        </label>
         {options.map(([key, label]) => (
           <label key={key} className="block text-sm">
             <input

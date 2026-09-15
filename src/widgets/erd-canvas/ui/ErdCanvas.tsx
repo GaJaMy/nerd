@@ -130,20 +130,20 @@ function ErdCanvasContent({
   return (
     <section
       aria-label="ERD 캔버스"
-      className="relative min-h-0 flex-1 overflow-hidden border border-zinc-200 bg-white"
+      className="relative min-h-0 flex-1 overflow-hidden border border-slate-700 bg-slate-950"
       data-testid="erd-canvas"
     >
       {tables.length === 0 ? (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-          <div className="rounded-md border border-dashed border-zinc-300 bg-white/90 px-5 py-4 text-center shadow-sm">
-            <p className="text-sm font-medium text-zinc-800">테이블이 없습니다</p>
-            <p className="mt-1 text-xs text-zinc-500">상단에서 새 테이블을 추가하세요</p>
+          <div className="rounded-md border border-dashed border-slate-600 bg-slate-900/90 px-5 py-4 text-center shadow-sm">
+            <p className="text-sm font-medium text-slate-100">테이블이 없습니다</p>
+            <p className="mt-1 text-xs text-slate-400">상단에서 새 테이블을 추가하세요</p>
           </div>
         </div>
       ) : null}
 
       <ReactFlow
-        colorMode="light"
+        colorMode="dark"
         edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
         edgeTypes={edgeTypes}
         onEdgeClick={(_, edge) => selectRelation(edge.id)}
@@ -164,7 +164,13 @@ function ErdCanvasContent({
         }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#d4d4d8" gap={24} size={1} variant={BackgroundVariant.Dots} />
+        <Background
+          bgColor="#0f172a"
+          color="#334155"
+          gap={24}
+          size={1}
+          variant={BackgroundVariant.Dots}
+        />
         <MiniMap className="hidden lg:block" pannable position="bottom-left" zoomable />
         <Controls position="bottom-right" />
       </ReactFlow>

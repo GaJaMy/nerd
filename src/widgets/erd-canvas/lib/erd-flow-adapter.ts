@@ -80,7 +80,7 @@ export function toErdRelationFlowEdges(
         type: self ? 'selfRelation' : 'smoothstep',
         labelStyle: { fontSize: 11, fontWeight: 600 },
         style: {
-          stroke: relation.id === selectedId ? '#0f766e' : '#52525b',
+          stroke: relation.id === selectedId ? '#2dd4bf' : '#94a3b8',
           strokeWidth: 2,
         },
       }
