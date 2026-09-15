@@ -22,7 +22,8 @@ it('labels relationship direction and ordered mappings, and excludes hidden endp
     source: 'child',
     target: 'parent',
     selected: true,
-    label: '관계 · N:1 · id → id',
+    label: 'N:1',
+    ariaLabel: '관계 · N:1 · id → id',
   })
   expect(
     toErdRelationFlowEdges(
@@ -31,4 +32,18 @@ it('labels relationship direction and ordered mappings, and excludes hidden endp
       null,
     ),
   ).toEqual([])
+  const self = { ...relation, targetTableId: 'child' }
+  expect(toErdRelationFlowEdges(tables, [self], null)[0]).toMatchObject({
+    type: 'selfRelation',
+    sourceHandle: 'source-right',
+    targetHandle: 'target-right',
+  })
+  const moved = tables.map((table) => ({
+    ...table,
+    position: { x: table.id === 'child' ? 500 : 0, y: 0 },
+  }))
+  expect(toErdRelationFlowEdges(moved, [relation], null)[0]).toMatchObject({
+    sourceHandle: 'source-left',
+    targetHandle: 'target-right',
+  })
 })

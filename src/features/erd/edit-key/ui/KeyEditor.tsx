@@ -16,7 +16,7 @@ export function KeyEditor({ table }: { table: ErdTable }) {
           <input
             type="checkbox"
             checked={columnIds.includes(column.id)}
-            disabled={column.dataType.name === 'TEXT'}
+            disabled={column.dataType.name === 'TEXT' && !columnIds.includes(column.id)}
             onChange={(event) =>
               setColumnIds(
                 event.target.checked

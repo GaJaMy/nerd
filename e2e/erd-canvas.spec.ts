@@ -52,6 +52,15 @@ test('designs a composite relation and downloads MySQL DDL', async ({ page }) =>
   expect(download.suggestedFilename()).toBe('erd.sql')
   expect(await readFile(await download.path(), 'utf8')).toBe(ddl)
   await page.screenshot({ path: 'test-results/erd-complete.png', fullPage: true })
+  await relation.getByRole('button', { name: '새 관계' }).click()
+  await relation.getByLabel('FK 소유 테이블').selectOption({ label: 'parents' })
+  await relation.getByLabel('참조 대상 테이블').selectOption({ label: 'parents' })
+  await relation.getByLabel('FK 1 → column_1').selectOption({ label: 'column_1' })
+  await relation.getByLabel('FK 2 → column_2').selectOption({ label: 'column_2' })
+  await relation.getByRole('button', { name: '관계 추가' }).click()
+  await expect(
+    page.locator('.react-flow__edge-selfRelation path.react-flow__edge-path'),
+  ).toHaveAttribute('d', /C/)
 })
 
 test('moves, hides, and focuses a table and resets volatile data on reload', async ({
@@ -68,11 +77,34 @@ test('moves, hides, and focuses a table and resets volatile data on reload', asy
   await page.mouse.up()
   const after = await node.boundingBox()
   expect(after!.x).toBeGreaterThan(before.x + 100)
+  const viewportBeforeSearch = await page
+    .locator('.react-flow__viewport')
+    .getAttribute('style')
+  await page.getByRole('button', { name: 'Zoom Out', exact: true }).click()
+  await expect(page.locator('.react-flow__viewport')).not.toHaveAttribute(
+    'style',
+    viewportBeforeSearch!,
+  )
   await page.getByRole('button', { name: 'table_1 숨기기' }).click()
   await expect(node).toHaveCount(0)
   await page.getByLabel('테이블 검색').fill('TABLE_1')
   await page.getByRole('button', { name: 'table_1 (숨김)', exact: true }).click()
   await expect(node).toBeInViewport()
+  await expect(page.locator('.react-flow__viewport')).not.toHaveAttribute(
+    'style',
+    viewportBeforeSearch!,
+  )
   await page.reload()
   await expect(page.getByText('테이블 0개')).toBeVisible()
+})
+
+test('keeps the canvas and editor usable on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.getByRole('button', { name: '테이블 추가' }).click()
+  await expect(page.getByTestId('erd-table-node-table_1')).toBeInViewport()
+  await page.getByLabel('테이블 물리명').fill('mobile_table')
+  await page.getByRole('button', { name: '테이블 적용' }).click()
+  await expect(page.getByTestId('erd-table-node-mobile_table')).toBeInViewport()
+  await page.screenshot({ path: 'test-results/erd-mobile.png', fullPage: true })
 })

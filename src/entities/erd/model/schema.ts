@@ -1,20 +1,20 @@
 import { z } from 'zod'
 
-export const MYSQL_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
+const MYSQL_IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/
 
-export const mysqlIdentifierSchema = z
+const mysqlIdentifierSchema = z
   .string()
   .trim()
   .min(1)
   .max(64)
   .regex(MYSQL_IDENTIFIER_PATTERN)
 
-export const canvasPositionSchema = z.object({
+const canvasPositionSchema = z.object({
   x: z.number().finite(),
   y: z.number().finite(),
 })
 
-export const canvasSizeSchema = z.object({
+const canvasSizeSchema = z.object({
   height: z.number().positive().finite(),
   width: z.number().positive().finite(),
 })
@@ -86,7 +86,7 @@ export const erdColumnSchema = z.object({
   physicalName: mysqlIdentifierSchema,
 })
 
-export const erdKeyTypeSchema = z.enum(['primary', 'foreign', 'unique'])
+const erdKeyTypeSchema = z.enum(['primary', 'foreign', 'unique'])
 
 export const erdKeySchema = z.object({
   columnIds: z.array(z.string().min(1)).min(1),
@@ -98,7 +98,7 @@ export const erdKeySchema = z.object({
 
 export const relationCardinalitySchema = z.enum(['one-to-one', 'one-to-many'])
 
-export const relationColumnMappingSchema = z.object({
+const relationColumnMappingSchema = z.object({
   ordinal: z.number().int().nonnegative(),
   sourceColumnId: z.string().min(1),
   targetColumnId: z.string().min(1),
@@ -138,7 +138,6 @@ export const erdProjectSchema = z.object({
 })
 
 export type CanvasPosition = z.infer<typeof canvasPositionSchema>
-export type CanvasSize = z.infer<typeof canvasSizeSchema>
 export type CanvasViewport = z.infer<typeof canvasViewportSchema>
 export type DisplayOptions = z.infer<typeof displayOptionsSchema>
 export type ErdColumn = z.infer<typeof erdColumnSchema>

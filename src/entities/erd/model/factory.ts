@@ -1,4 +1,4 @@
-﻿import {
+import {
   displayOptionsSchema,
   erdColumnSchema,
   erdKeySchema,
@@ -78,7 +78,7 @@ export function createDefaultDisplayOptions(): DisplayOptions {
   })
 }
 
-export function createDefaultCanvasViewport(): CanvasViewport {
+function createDefaultCanvasViewport(): CanvasViewport {
   return {
     x: 0,
     y: 0,

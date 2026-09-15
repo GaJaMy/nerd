@@ -21,11 +21,29 @@ export function getMysqlExportIssues(project: ErdProject): string[] {
   if (issues.length) return issues
   if (!project.tables.length) issues.push('내보낼 테이블이 없습니다.')
   for (const table of project.tables) {
+    const rowBytes = table.columns.reduce(
+      (total, column) =>
+        total +
+        (column.dataType.name === 'VARCHAR'
+          ? column.dataType.length! * 4 + 2
+          : column.dataType.name === 'TEXT'
+            ? 12
+            : 34),
+      Math.ceil(table.columns.length / 8),
+    )
+    if (table.columns.length > 1017 || rowBytes > 65535)
+      issues.push(
+        `${table.physicalName}: 컬럼 수 또는 최대 행 크기 한도를 초과했습니다. 긴 문자열은 TEXT로 변경하세요.`,
+      )
     if (!table.columns.length)
       issues.push(`${table.physicalName}: 컬럼을 하나 이상 추가하세요.`)
     if ((table.comment?.length ?? 0) > 2048)
       issues.push(`${table.physicalName}: 테이블 코멘트는 2048자 이내여야 합니다.`)
     for (const column of table.columns) {
+      if (hasControlCharacter(column.comment ?? ''))
+        issues.push(
+          `${table.physicalName}.${column.physicalName}: 코멘트의 제어 문자를 제거하세요.`,
+        )
       if (column.defaultValue !== undefined)
         issues.push(
           `${table.physicalName}.${column.physicalName}: 기본값 export는 이번 MVP에서 지원하지 않습니다.`,
@@ -35,6 +53,8 @@ export function getMysqlExportIssues(project: ErdProject): string[] {
           `${table.physicalName}.${column.physicalName}: 컬럼 코멘트는 1024자 이내여야 합니다.`,
         )
     }
+    if (hasControlCharacter(table.comment ?? ''))
+      issues.push(`${table.physicalName}: 코멘트의 제어 문자를 제거하세요.`)
     const keys = project.keys.filter((key) => key.tableId === table.id)
     const names = new Set<string>()
     for (const key of keys) {
@@ -172,4 +192,10 @@ function identifier(name: string) {
 }
 function literal(value: string) {
   return `'${value.replaceAll("'", "''")}'`
+}
+
+function hasControlCharacter(value: string) {
+  return [...value].some(
+    (character) => character.charCodeAt(0) === 0 || character.charCodeAt(0) === 26,
+  )
 }

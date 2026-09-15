@@ -1,6 +1,7 @@
 ﻿import { Table2 } from 'lucide-react'
 import type { DisplayOptions, ErdTable, ErdKey, ErdRelation } from '@/entities/erd/model'
 import { cn } from '@/shared/lib/cn'
+import { formatMysqlType } from '@/entities/erd/model/mysql-ddl'
 
 type ErdTableCardProps = {
   displayOptions: DisplayOptions
@@ -100,12 +101,7 @@ export function ErdTableCard({
                 </span>
                 {displayOptions.showDataType ? (
                   <span className="shrink-0 text-[11px] text-zinc-500">
-                    {column.dataType.name}
-                    {column.dataType.length ? `(${column.dataType.length})` : ''}
-                    {column.dataType.precision
-                      ? `(${column.dataType.precision}, ${column.dataType.scale})`
-                      : ''}
-                    {column.dataType.unsigned ? ' UNSIGNED' : ''}
+                    {formatMysqlType(column.dataType)}
                   </span>
                 ) : null}
               </li>

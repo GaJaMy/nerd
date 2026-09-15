@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { DisplayOptions, ErdKey, ErdRelation, ErdTable } from '@/entities/erd/model'
 
-export type ErdTableNodeData = {
+type ErdTableNodeData = {
   displayOptions: DisplayOptions
   table: ErdTable
   keys: ErdKey[]
@@ -64,15 +64,21 @@ export function toErdRelationFlowEdges(
             `${source?.columns.find((column) => column.id === mapping.sourceColumnId)?.physicalName} → ${target?.columns.find((column) => column.id === mapping.targetColumnId)?.physicalName}`,
         )
         .join(', ')
-      const label = `${relation.label ?? '관계'} · ${relation.cardinality === 'one-to-one' ? '1:1' : 'N:1'} · ${mappings}`
+      const cardinality = relation.cardinality === 'one-to-one' ? '1:1' : 'N:1'
+      const label = `${cardinality}${relation.columnMappings.length > 1 ? ` · ${relation.columnMappings.length}열` : ''}`
+      const self = source?.id === target?.id
+      const pointsLeft = (source?.position.x ?? 0) > (target?.position.x ?? 0)
       return {
         id: relation.id,
         source: relation.sourceTableId,
         target: relation.targetTableId,
+        sourceHandle: pointsLeft && !self ? 'source-left' : 'source-right',
+        targetHandle: pointsLeft || self ? 'target-right' : 'target-left',
         label,
-        ariaLabel: label,
+        ariaLabel: `${relation.label ?? '관계'} · ${cardinality} · ${mappings}`,
         selected: relation.id === selectedId,
-        type: 'smoothstep',
+        type: self ? 'selfRelation' : 'smoothstep',
+        labelStyle: { fontSize: 11, fontWeight: 600 },
         style: {
           stroke: relation.id === selectedId ? '#0f766e' : '#52525b',
           strokeWidth: 2,

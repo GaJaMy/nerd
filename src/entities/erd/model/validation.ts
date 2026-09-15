@@ -24,6 +24,7 @@ export type ErdValidationIssue = {
     | 'invalid-key-column'
     | 'duplicate-relation-source-column'
     | 'incompatible-relation-column'
+    | 'duplicate-id'
   message: string
   path: Array<number | string>
 }
@@ -49,6 +50,7 @@ export function validateErdProject(project: ErdProject): ErdValidationIssue[] {
   const columnIndexByTableId = createColumnIndexByTableId(validProject.tables)
 
   return [
+    ...findDuplicateIds(validProject),
     ...findDuplicateTablePhysicalNameIssues(validProject.tables),
     ...validProject.tables.flatMap((table, tableIndex) =>
       findDuplicateColumnPhysicalNameIssues(table, tableIndex),
@@ -63,6 +65,29 @@ export function validateErdProject(project: ErdProject): ErdValidationIssue[] {
       columnIndexByTableId,
     ),
   ]
+}
+
+function findDuplicateIds(project: ErdProject): ErdValidationIssue[] {
+  const issues: ErdValidationIssue[] = []
+  const inspect = (items: Array<{ id: string }>, path: Array<string | number>) => {
+    const ids = new Set<string>()
+    items.forEach((item, index) => {
+      if (ids.has(item.id))
+        issues.push({
+          code: 'duplicate-id',
+          message: `식별자 "${item.id}"이 중복되었습니다.`,
+          path: [...path, index, 'id'],
+        })
+      ids.add(item.id)
+    })
+  }
+  inspect(project.tables, ['tables'])
+  inspect(project.keys, ['keys'])
+  inspect(project.relations, ['relations'])
+  project.tables.forEach((table, index) =>
+    inspect(table.columns, ['tables', index, 'columns']),
+  )
+  return issues
 }
 
 function findMysqlConstraintIssues(project: ErdProject): ErdValidationIssue[] {

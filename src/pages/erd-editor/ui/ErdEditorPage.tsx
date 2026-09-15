@@ -1,5 +1,6 @@
 import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
+import { ErdValidation } from '@/widgets/erd-validation/ui/ErdValidation'
 import { DdlExport } from '@/features/erd/export-ddl/ui/DdlExport'
 import { useState } from 'react'
 import { ErdNavigation } from '@/widgets/erd-navigation/ui/ErdNavigation'
@@ -34,7 +35,11 @@ export function ErdEditorPage() {
           <button
             className="ml-auto inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:ring-2 focus:ring-teal-600/25 focus:outline-none"
             onClick={() => {
-              addTable()
+              const table = addTable()
+              setFocusRequest((previous) => ({
+                tableId: table.id,
+                sequence: (previous?.sequence ?? 0) + 1,
+              }))
             }}
             type="button"
           >
@@ -58,6 +63,10 @@ export function ErdEditorPage() {
             className="overflow-y-auto border-t border-zinc-200 bg-white p-4 lg:border-t-0 lg:border-l"
           >
             <section className="space-y-4">
+              <p className="text-xs text-zinc-500">
+                작업은 현재 화면에서만 유지됩니다. 새로고침하면 초기화됩니다.
+              </p>
+              <ErdValidation />
               <ErdNavigation
                 onFocus={(tableId) =>
                   setFocusRequest((previous) => ({
@@ -79,7 +88,6 @@ export function ErdEditorPage() {
               </div>
 
               <div className="rounded-md border border-zinc-200 p-3">
-                <h2 className="text-sm font-semibold text-zinc-950">선택된 테이블</h2>
                 {selectedTable ? (
                   <div className="space-y-5">
                     <TableEditor key={selectedTable.id} table={selectedTable} />

@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo, useEffect, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
   Controls,
+  BaseEdge,
   Handle,
   Position,
   MiniMap,
@@ -13,6 +14,7 @@ import {
   type NodeChange,
   type NodeProps,
   type NodeTypes,
+  type EdgeProps,
 } from '@xyflow/react'
 import type { CanvasPosition, DisplayOptions, ErdTable } from '@/entities/erd/model'
 import { useErdEditorStore } from '@/entities/erd/model'
@@ -36,6 +38,29 @@ const nodeTypes = {
   erdTable: ErdTableNode,
 } satisfies NodeTypes
 
+const edgeTypes = { selfRelation: SelfRelationEdge }
+
+function SelfRelationEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  label,
+  style,
+}: EdgeProps) {
+  return (
+    <BaseEdge
+      id={id}
+      path={`M ${sourceX} ${sourceY} C ${sourceX + 140} ${sourceY + 80}, ${targetX + 140} ${targetY - 80}, ${targetX} ${targetY}`}
+      label={label}
+      labelX={sourceX + 110}
+      labelY={(sourceY + targetY) / 2}
+      style={style}
+    />
+  )
+}
+
 export function ErdCanvas(props: ErdCanvasProps) {
   return (
     <ReactFlowProvider>
@@ -52,6 +77,9 @@ function ErdCanvasContent({
   tables,
   focusRequest,
 }: ErdCanvasProps) {
+  const [measurements, setMeasurements] = useState<
+    Record<string, { width: number; height: number }>
+  >({})
   const viewport = useErdEditorStore((state) => state.project.viewport)
   const setViewport = useErdEditorStore((state) => state.setViewport)
   const { fitView } = useReactFlow()
@@ -66,13 +94,31 @@ function ErdCanvasContent({
   const selectRelation = useErdEditorStore((state) => state.selectRelation)
   const nodes = useMemo(
     () =>
-      toErdTableFlowNodes({ displayOptions, selectedTableId, tables, keys, relations }),
-    [displayOptions, selectedTableId, tables, keys, relations],
+      toErdTableFlowNodes({
+        displayOptions,
+        selectedTableId,
+        tables,
+        keys,
+        relations,
+      }).map((node) => ({
+        ...node,
+        ...(measurements[node.id] ? { measured: measurements[node.id] } : {}),
+      })),
+    [displayOptions, selectedTableId, tables, keys, relations, measurements],
   )
 
   const handleNodesChange = useCallback(
     (changes: NodeChange<ErdTableFlowNode>[]) => {
       changes.forEach((change) => {
+        if (change.type === 'dimensions' && change.dimensions) {
+          const dimensions = change.dimensions
+          setMeasurements((previous) =>
+            previous[change.id]?.width === dimensions.width &&
+            previous[change.id]?.height === dimensions.height
+              ? previous
+              : { ...previous, [change.id]: dimensions },
+          )
+        }
         if (change.type === 'position' && change.position) {
           onTablePositionChange(change.id, change.position)
         }
@@ -99,6 +145,7 @@ function ErdCanvasContent({
       <ReactFlow
         colorMode="light"
         edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
+        edgeTypes={edgeTypes}
         onEdgeClick={(_, edge) => selectRelation(edge.id)}
         nodesConnectable={false}
         deleteKeyCode={null}
@@ -118,7 +165,7 @@ function ErdCanvasContent({
         proOptions={{ hideAttribution: true }}
       >
         <Background color="#d4d4d8" gap={24} size={1} variant={BackgroundVariant.Dots} />
-        <MiniMap pannable position="bottom-left" zoomable />
+        <MiniMap className="hidden lg:block" pannable position="bottom-left" zoomable />
         <Controls position="bottom-right" />
       </ReactFlow>
     </section>
@@ -128,7 +175,18 @@ function ErdCanvasContent({
 function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
   return (
     <>
-      <Handle type="target" position={Position.Left} />
+      <Handle
+        id="target-left"
+        type="target"
+        position={Position.Left}
+        style={{ top: '35%' }}
+      />
+      <Handle
+        id="target-right"
+        type="target"
+        position={Position.Right}
+        style={{ top: '35%' }}
+      />
       <ErdTableCard
         displayOptions={data.displayOptions}
         selected={selected}
@@ -136,7 +194,18 @@ function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
         keys={data.keys}
         relations={data.relations}
       />
-      <Handle type="source" position={Position.Right} />
+      <Handle
+        id="source-left"
+        type="source"
+        position={Position.Left}
+        style={{ top: '65%' }}
+      />
+      <Handle
+        id="source-right"
+        type="source"
+        position={Position.Right}
+        style={{ top: '65%' }}
+      />
     </>
   )
 }
