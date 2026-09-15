@@ -48,7 +48,7 @@ type ErdEditorSelection = {
 }
 
 export type ErdEditorStore = ErdEditorSelection & {
-  addColumn: (tableId: string, input: CreateErdColumnInput) => ErdColumn | null
+  addColumn: (tableId: string, input?: CreateErdColumnInput) => ErdColumn | null
   addRelation: (input: CreateErdRelationInput) => ErdRelation | null
   addTable: (input?: CreateErdTableInput) => ErdTable
   deleteColumn: (tableId: string, columnId: string) => void

@@ -7,6 +7,7 @@ import {
 } from './factory'
 import { validateErdProject } from './validation'
 import { removeErdColumnFromTable, removeErdTableFromProject } from './editor-actions'
+import { addErdColumnToTable } from './editor-actions'
 
 function fixture() {
   const column = createErdColumn({
@@ -32,6 +33,32 @@ function fixture() {
     ],
   })
 }
+
+it('adds default columns with unique physical names and preserves existing columns', () => {
+  const project = createErdProject({
+    tables: [
+      createErdTable({
+        id: 'a',
+        columns: [
+          createErdColumn({
+            physicalName: 'COLUMN_1',
+            dataType: { name: 'INT' },
+            nullable: false,
+          }),
+        ],
+      }),
+    ],
+  })
+  const result = addErdColumnToTable(project, 'a')!
+  expect(result.column).toMatchObject({
+    physicalName: 'column_2',
+    dataType: { name: 'BIGINT' },
+    nullable: true,
+    ordinal: 1,
+  })
+  expect(project.tables[0]?.columns).toHaveLength(1)
+  expect(result.project.tables[0]?.columns).toHaveLength(2)
+})
 
 it('reports incompatible FK types, nullable PKs and duplicate identifiers', () => {
   const project = fixture()

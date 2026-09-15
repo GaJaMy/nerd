@@ -1,5 +1,6 @@
 import type { DisplayOptions, ErdTable, ErdKey, ErdRelation } from '@/entities/erd/model'
 import { cn } from '@/shared/lib/cn'
+import { useErdEditorStore } from '@/entities/erd/model'
 import { ErdNameInput } from './ErdNameInput'
 import { formatMysqlType } from '@/entities/erd/model/mysql-ddl'
 
@@ -18,6 +19,7 @@ export function ErdTableCard({
   keys = [],
   relations = [],
 }: ErdTableCardProps) {
+  const addColumn = useErdEditorStore((state) => state.addColumn)
   const showLogical = displayOptions.showLogicalName
   const showPhysical = displayOptions.showPhysicalName || !showLogical
   const nameColumns = showLogical && showPhysical ? 'grid-cols-2' : 'grid-cols-1'
@@ -130,6 +132,22 @@ export function ErdTableCard({
         ))}
       </ul>
       {!table.columns.length && <p className="p-3 text-xs text-slate-400">컬럼 0개</p>}
+      <div
+        className="group/add-column mt-auto border-t border-slate-700 px-3 py-2"
+        data-testid="column-add-area"
+      >
+        <button
+          type="button"
+          aria-label="컬럼 추가"
+          className="nodrag nopan flex h-8 w-full items-center justify-center rounded border border-dashed border-teal-400/60 text-xl text-teal-300 opacity-0 transition-opacity group-focus-within/add-column:opacity-100 group-hover/add-column:opacity-100 focus:opacity-100 focus:outline-2 focus:outline-teal-300 [@media(hover:none)]:opacity-100"
+          onClick={(event) => {
+            event.stopPropagation()
+            addColumn(table.id)
+          }}
+        >
+          +
+        </button>
+      </div>
     </article>
   )
 }

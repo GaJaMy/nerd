@@ -176,7 +176,7 @@ export function setErdTableHiddenInProject(
 export function addErdColumnToTable(
   project: ErdProject,
   tableId: string,
-  input: CreateErdColumnInput,
+  input?: CreateErdColumnInput,
 ): ErdColumnResult | null {
   const table = findTable(project, tableId)
 
@@ -184,9 +184,20 @@ export function addErdColumnToTable(
     return null
   }
 
+  let index = 1
+  while (
+    table.columns.some(
+      (column) => column.physicalName.toLowerCase() === `column_${index}`,
+    )
+  )
+    index++
   const column = createErdColumn({
-    ...input,
-    ordinal: input.ordinal ?? createNextColumnOrdinal(table.columns),
+    ...(input ?? {
+      physicalName: `column_${index}`,
+      dataType: { name: 'BIGINT' },
+      nullable: true,
+    }),
+    ordinal: input?.ordinal ?? createNextColumnOrdinal(table.columns),
   })
 
   return {

@@ -63,8 +63,22 @@ test('designs a composite relation and downloads MySQL DDL', async ({ page }) =>
   for (const name of ['parents', 'children']) {
     await drawTable(page, name === 'children' ? 440 : 0)
     await page.getByLabel('테이블 물리명', { exact: true }).fill(name)
-    await page.getByRole('button', { name: '컬럼 추가' }).click()
-    await page.getByRole('button', { name: '컬럼 추가' }).click()
+    await page
+      .getByTestId('erd-table-node-' + name)
+      .getByTestId('column-add-area')
+      .hover()
+    await page
+      .getByTestId('erd-table-node-' + name)
+      .getByRole('button', { name: '컬럼 추가' })
+      .click()
+    await page
+      .getByTestId('erd-table-node-' + name)
+      .getByTestId('column-add-area')
+      .hover()
+    await page
+      .getByTestId('erd-table-node-' + name)
+      .getByRole('button', { name: '컬럼 추가' })
+      .click()
     if (name === 'parents') {
       const pk = page.getByRole('region', { name: '기본키 설정' })
       await pk.getByLabel('column_1').check()
@@ -145,5 +159,14 @@ test('keeps the canvas and editor usable on a narrow screen', async ({ page }) =
   await expect(page.getByTestId('erd-table-node-table_1')).toBeInViewport()
   await page.getByLabel('테이블 물리명', { exact: true }).fill('mobile_table')
   await expect(page.getByTestId('erd-table-node-mobile_table')).toBeInViewport()
+  const add = page
+    .getByTestId('erd-table-node-mobile_table')
+    .getByRole('button', { name: '컬럼 추가' })
+  await add.focus()
+  await expect(add).toHaveCSS('opacity', '1')
+  await page.keyboard.press('Enter')
+  await expect(
+    page.getByTestId('erd-table-node-mobile_table').getByLabel('캔버스 컬럼 물리명'),
+  ).toHaveValue('column_1')
   await page.screenshot({ path: 'test-results/erd-mobile.png', fullPage: true })
 })

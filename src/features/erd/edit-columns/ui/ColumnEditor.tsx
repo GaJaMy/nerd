@@ -9,30 +9,10 @@ import {
 import { ErdNameInput } from '@/entities/erd/ui/ErdNameInput'
 
 export function ColumnEditor({ table }: { table: ErdTable }) {
-  const store = useErdEditorStore()
   return (
     <section className="space-y-3" aria-label="컬럼 편집">
       <h2 className="font-semibold">컬럼 편집</h2>
-      <button
-        type="button"
-        className="rounded border px-3 py-2"
-        onClick={() => {
-          let index = 1
-          while (
-            table.columns.some(
-              (column) => column.physicalName.toLowerCase() === `column_${index}`,
-            )
-          )
-            index++
-          store.addColumn(table.id, {
-            physicalName: `column_${index}`,
-            dataType: { name: 'BIGINT' },
-            nullable: true,
-          })
-        }}
-      >
-        컬럼 추가
-      </button>
+
       {table.columns.map((column) => (
         <ColumnForm key={column.id} column={column} table={table} />
       ))}
