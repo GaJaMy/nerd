@@ -87,8 +87,10 @@ test('designs a composite relation and downloads MySQL DDL', async ({ page }) =>
     }
   }
   const relation = page.getByRole('region', { name: '관계 설정' })
-  await relation.getByLabel('FK 소유 테이블').selectOption({ label: 'children' })
-  await relation.getByLabel('참조 대상 테이블').selectOption({ label: 'parents' })
+  await relation.getByRole('button', { name: '관계 연결', exact: true }).click()
+  await page.getByRole('button', { name: '관계 테이블 children 선택' }).click()
+  await expect(relation.getByRole('status')).toContainText('참조 대상')
+  await page.getByRole('button', { name: '관계 테이블 parents 선택' }).click()
   await relation.getByLabel('FK 1 → column_1').selectOption({ label: 'column_1' })
   await relation.getByLabel('FK 2 → column_2').selectOption({ label: 'column_2' })
   await relation.getByLabel('관계 종류').selectOption('one-to-one')
@@ -107,8 +109,8 @@ test('designs a composite relation and downloads MySQL DDL', async ({ page }) =>
   expect(await readFile(await download.path(), 'utf8')).toBe(ddl)
   await page.screenshot({ path: 'test-results/erd-complete.png', fullPage: true })
   await relation.getByRole('button', { name: '새 관계' }).click()
-  await relation.getByLabel('FK 소유 테이블').selectOption({ label: 'parents' })
-  await relation.getByLabel('참조 대상 테이블').selectOption({ label: 'parents' })
+  await page.getByRole('button', { name: '관계 테이블 parents 선택' }).click()
+  await page.getByRole('button', { name: '관계 테이블 parents 선택' }).click()
   await relation.getByLabel('FK 1 → column_1').selectOption({ label: 'column_1' })
   await relation.getByLabel('FK 2 → column_2').selectOption({ label: 'column_2' })
   await relation.getByRole('button', { name: '관계 추가' }).click()
@@ -169,4 +171,73 @@ test('keeps the canvas and editor usable on a narrow screen', async ({ page }) =
     page.getByTestId('erd-table-node-mobile_table').getByLabel('캔버스 컬럼 물리명'),
   ).toHaveValue('column_1')
   await page.screenshot({ path: 'test-results/erd-mobile.png', fullPage: true })
+})
+
+test('cancels relation picking on Escape and when the selected table is hidden', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await drawTable(page)
+  const node = page.getByTestId('erd-table-node-table_1')
+  const add = node.getByRole('button', { name: '컬럼 추가' })
+  await node.getByTestId('column-add-area').hover()
+  await add.click()
+  const relation = page.getByRole('region', { name: '관계 설정' })
+  const connect = relation.getByRole('button', { name: '관계 연결', exact: true })
+  await connect.click()
+  await expect(relation.getByRole('status')).toContainText('FK 소유 테이블')
+  await expect(node.getByLabel('캔버스 테이블 논리명')).toBeDisabled()
+  await expect(node.getByLabel('캔버스 테이블 물리명')).toBeDisabled()
+  await expect(node.getByLabel('캔버스 컬럼 논리명')).toBeDisabled()
+  await expect(node.getByLabel('캔버스 컬럼 물리명')).toBeDisabled()
+  await expect(add).toBeDisabled()
+  await page.getByRole('button', { name: '관계 테이블 table_1 선택' }).click()
+  await expect(relation.getByRole('status')).toContainText('FK: table_1')
+  await expect(relation.getByRole('status')).toContainText('참조 대상 테이블')
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0)
+  await expect(relation.getByText('설정된 관계가 없습니다.')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(relation.getByRole('status')).toHaveCount(0)
+  await expect(relation.getByRole('button', { name: '연결 취소' })).toHaveCount(0)
+  await expect(node.getByLabel('캔버스 테이블 물리명')).toBeEnabled()
+  await expect(node.getByLabel('캔버스 컬럼 물리명')).toBeEnabled()
+  await expect(add).toBeEnabled()
+  await expect(
+    page.getByRole('button', { name: '테이블 그리기', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true')
+
+  await connect.click()
+  await expect(relation.getByRole('status')).toContainText('FK 소유 테이블')
+  await page.getByRole('button', { name: '관계 테이블 table_1 선택' }).click()
+  await expect(relation.getByRole('status')).toContainText('참조 대상 테이블')
+  await page.getByRole('button', { name: 'table_1 숨기기', exact: true }).click()
+  await expect(node).toHaveCount(0)
+  await expect(relation.getByRole('status')).toHaveCount(0)
+  await expect(relation.getByRole('button', { name: '연결 취소' })).toHaveCount(0)
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0)
+  await expect(relation.getByText('설정된 관계가 없습니다.')).toBeVisible()
+})
+
+test.describe('touch column creation', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } })
+
+  test('shows the bottom add button without hover and adds a column on tap', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await drawTable(page)
+    await page.mouse.move(0, 0)
+    const node = page.getByTestId('erd-table-node-table_1')
+    const add = node.getByRole('button', { name: '컬럼 추가' })
+    await expect(add).not.toBeFocused()
+    await expect(add).toHaveCSS('opacity', '1')
+    await add.tap()
+    await expect(node.getByLabel('캔버스 컬럼 물리명')).toHaveValue('column_1')
+    await expect(
+      page
+        .getByRole('region', { name: '컬럼 편집' })
+        .getByLabel('컬럼 물리명', { exact: true }),
+    ).toHaveValue('column_1')
+  })
 })

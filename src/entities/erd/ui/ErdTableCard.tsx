@@ -10,6 +10,7 @@ type ErdTableCardProps = {
   table: ErdTable
   keys?: ErdKey[]
   relations?: ErdRelation[]
+  editingDisabled?: boolean
 }
 
 export function ErdTableCard({
@@ -18,6 +19,7 @@ export function ErdTableCard({
   table,
   keys = [],
   relations = [],
+  editingDisabled = false,
 }: ErdTableCardProps) {
   const addColumn = useErdEditorStore((state) => state.addColumn)
   const showLogical = displayOptions.showLogicalName
@@ -41,6 +43,7 @@ export function ErdTableCard({
               tableId={table.id}
               field="logicalName"
               label="캔버스 테이블 논리명"
+              disabled={editingDisabled}
               dark
             />
           </div>
@@ -52,6 +55,7 @@ export function ErdTableCard({
               tableId={table.id}
               field="physicalName"
               label="캔버스 테이블 물리명"
+              disabled={editingDisabled}
               dark
             />
           </div>
@@ -79,6 +83,7 @@ export function ErdTableCard({
                   columnId={column.id}
                   field="logicalName"
                   label="캔버스 컬럼 논리명"
+                  disabled={editingDisabled}
                   dark
                 />
               )}
@@ -88,6 +93,7 @@ export function ErdTableCard({
                   columnId={column.id}
                   field="physicalName"
                   label="캔버스 컬럼 물리명"
+                  disabled={editingDisabled}
                   dark
                 />
               )}
@@ -139,6 +145,7 @@ export function ErdTableCard({
         <button
           type="button"
           aria-label="컬럼 추가"
+          disabled={editingDisabled}
           className="nodrag nopan flex h-8 w-full items-center justify-center rounded border border-dashed border-teal-400/60 text-xl text-teal-300 opacity-0 transition-opacity group-focus-within/add-column:opacity-100 group-hover/add-column:opacity-100 focus:opacity-100 focus:outline-2 focus:outline-teal-300 [@media(hover:none)]:opacity-100"
           onClick={(event) => {
             event.stopPropagation()

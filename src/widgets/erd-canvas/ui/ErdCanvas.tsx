@@ -80,6 +80,7 @@ function ErdCanvasContent({
   focusRequest,
 }: ErdCanvasProps) {
   const mode = useCanvasInteractionStore((state) => state.mode)
+  const relationDraft = useCanvasInteractionStore((state) => state.relationDraft)
   const addTable = useErdEditorStore((state) => state.addTable)
   const [drawing, setDrawing] = useState<{
     start: CanvasPosition
@@ -88,7 +89,11 @@ function ErdCanvasContent({
   } | null>(null)
   useEffect(() => {
     const cancel = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setDrawing(null)
+      if (event.key === 'Escape') {
+        setDrawing(null)
+        if (useCanvasInteractionStore.getState().relationDraft)
+          useCanvasInteractionStore.getState().cancelRelation()
+      }
     }
     window.addEventListener('keydown', cancel)
     const unsubscribe = useCanvasInteractionStore.subscribe(() => setDrawing(null))
@@ -205,11 +210,16 @@ function ErdCanvasContent({
 
       <ReactFlow
         panOnDrag={mode === 'pan' ? true : [1, 2]}
+        nodesDraggable={mode !== 'relation'}
         selectionOnDrag={false}
         colorMode="dark"
         edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
         edgeTypes={edgeTypes}
-        onEdgeClick={(_, edge) => selectRelation(edge.id)}
+        onEdgeClick={(_, edge) => {
+          if (mode === 'relation') return
+          useCanvasInteractionStore.getState().cancelRelation()
+          selectRelation(edge.id)
+        }}
         nodesConnectable={false}
         deleteKeyCode={null}
         viewport={viewport}
@@ -219,11 +229,13 @@ function ErdCanvasContent({
         nodes={nodes}
         nodeTypes={nodeTypes}
         onNodeClick={(_, node) => {
-          onSelectTable(node.id)
+          if (mode === 'relation')
+            useCanvasInteractionStore.getState().pickRelationTable(node.id)
+          else onSelectTable(node.id)
         }}
         onNodesChange={handleNodesChange}
         onPaneClick={() => {
-          onSelectTable(null)
+          if (mode !== 'relation') onSelectTable(null)
         }}
         proOptions={{ hideAttribution: true }}
       >
@@ -238,9 +250,13 @@ function ErdCanvasContent({
         <Controls position="bottom-right" />
       </ReactFlow>
       <p className="pointer-events-none absolute top-3 left-3 rounded bg-slate-900/90 px-3 py-2 text-xs text-slate-300">
-        {mode === 'draw'
-          ? '드래그: 테이블 그리기 · 가운데/오른쪽 드래그: 이동 · Esc: 취소'
-          : '빈 공간을 드래그해 화면 이동'}
+        {mode === 'relation'
+          ? relationDraft?.sourceTableId
+            ? `FK: ${tables.find((table) => table.id === relationDraft.sourceTableId)?.physicalName} · 참조 대상 테이블을 클릭하세요 · Esc: 취소`
+            : 'FK 소유 테이블을 클릭하세요 · Esc: 취소'
+          : mode === 'draw'
+            ? '드래그: 테이블 그리기 · 가운데/오른쪽 드래그: 이동 · Esc: 취소'
+            : '빈 공간을 드래그해 화면 이동'}
       </p>
       {drawing && mode === 'draw' && (
         <div
@@ -265,8 +281,23 @@ function ErdCanvasContent({
 }
 
 function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
+  const picking = useCanvasInteractionStore((state) => state.mode === 'relation')
+  const sourceId = useCanvasInteractionStore(
+    (state) => state.relationDraft?.sourceTableId,
+  )
   return (
-    <>
+    <div
+      tabIndex={picking ? 0 : undefined}
+      role={picking ? 'button' : undefined}
+      aria-label={picking ? `관계 테이블 ${data.table.physicalName} 선택` : undefined}
+      onKeyDown={(event) => {
+        if (picking && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          event.stopPropagation()
+          useCanvasInteractionStore.getState().pickRelationTable(data.table.id)
+        }
+      }}
+    >
       <Handle
         id="target-left"
         type="target"
@@ -279,13 +310,16 @@ function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
         position={Position.Right}
         style={{ top: '35%' }}
       />
-      <ErdTableCard
-        displayOptions={data.displayOptions}
-        selected={selected}
-        table={data.table}
-        keys={data.keys}
-        relations={data.relations}
-      />
+      <div className={picking ? 'pointer-events-none' : undefined}>
+        <ErdTableCard
+          displayOptions={data.displayOptions}
+          selected={picking ? sourceId === data.table.id : selected}
+          editingDisabled={picking}
+          table={data.table}
+          keys={data.keys}
+          relations={data.relations}
+        />
+      </div>
       <Handle
         id="source-left"
         type="source"
@@ -298,6 +332,6 @@ function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
         position={Position.Right}
         style={{ top: '65%' }}
       />
-    </>
+    </div>
   )
 }

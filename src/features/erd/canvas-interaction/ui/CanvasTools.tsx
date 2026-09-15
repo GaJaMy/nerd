@@ -1,6 +1,11 @@
-import { useCanvasInteractionStore } from '../model/use-canvas-interaction-store'
+import { useEffect } from 'react'
+import {
+  subscribeToRelationEndpoints,
+  useCanvasInteractionStore,
+} from '../model/use-canvas-interaction-store'
 
 export function CanvasTools() {
+  useEffect(() => subscribeToRelationEndpoints(), [])
   const { mode, setMode } = useCanvasInteractionStore()
   return (
     <div className="ml-auto flex gap-2" aria-label="캔버스 도구">

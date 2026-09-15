@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useCanvasInteractionStore } from '@/features/erd/canvas-interaction/model/use-canvas-interaction-store'
 import {
   createErdRelation,
   relationCardinalitySchema,
@@ -9,13 +10,59 @@ import {
 
 export function RelationEditor() {
   const store = useErdEditorStore()
+  const { mode, relationDraft, beginRelation, cancelRelation } =
+    useCanvasInteractionStore()
   const selected = store.project.relations.find(
     (relation) => relation.id === store.selectedRelationId,
   )
+  const editing = relationDraft
+    ? store.project.relations.find((relation) => relation.id === relationDraft.relationId)
+    : selected
+  const sourceId = relationDraft ? relationDraft.sourceTableId : selected?.sourceTableId
+  const targetId = relationDraft ? relationDraft.targetTableId : selected?.targetTableId
   return (
     <section aria-label="관계 설정" className="space-y-3 border-t pt-4">
       <h2 className="font-semibold">관계 설정</h2>
-      <RelationForm key={selected?.id ?? 'new'} relation={selected} />
+      <button
+        type="button"
+        className="rounded border px-3 py-2"
+        onClick={() => beginRelation()}
+      >
+        관계 연결
+      </button>
+      {selected && !relationDraft && (
+        <button
+          type="button"
+          className="ml-2 rounded border px-3 py-2"
+          onClick={() => beginRelation(selected.id)}
+        >
+          두 테이블 다시 선택
+        </button>
+      )}
+      {mode === 'relation' && (
+        <p role="status" className="text-sm text-teal-700">
+          {relationDraft?.sourceTableId
+            ? `FK: ${store.project.tables.find((table) => table.id === relationDraft.sourceTableId)?.physicalName} → 캔버스에서 참조 대상 테이블을 클릭하세요.`
+            : '캔버스에서 FK 소유 테이블을 클릭하세요.'}
+        </p>
+      )}
+      {relationDraft && (
+        <button
+          type="button"
+          className="rounded border px-3 py-2"
+          onClick={cancelRelation}
+        >
+          연결 취소
+        </button>
+      )}
+      {mode !== 'relation' && sourceId && targetId && (
+        <RelationForm
+          key={`${editing?.id ?? 'new'}:${sourceId}:${targetId}`}
+          relation={editing}
+          sourceId={sourceId}
+          targetId={targetId}
+        />
+      )}
       <ul className="space-y-2">
         {store.project.relations.map((relation) => (
           <li key={relation.id}>
@@ -23,7 +70,10 @@ export function RelationEditor() {
               type="button"
               className="w-full rounded border p-2 text-left"
               aria-pressed={selected?.id === relation.id}
-              onClick={() => store.selectRelation(relation.id)}
+              onClick={() => {
+                cancelRelation()
+                store.selectRelation(relation.id)
+              }}
             >
               {relation.label ?? '관계'}:{' '}
               {
@@ -47,16 +97,22 @@ export function RelationEditor() {
   )
 }
 
-function RelationForm({ relation }: { relation: ErdRelation | undefined }) {
+function RelationForm({
+  relation,
+  sourceId,
+  targetId,
+}: {
+  relation: ErdRelation | undefined
+  sourceId: string
+  targetId: string
+}) {
   const store = useErdEditorStore()
-  const [sourceId, setSourceId] = useState(relation?.sourceTableId ?? '')
-  const [targetId, setTargetId] = useState(relation?.targetTableId ?? '')
   const [mapping, setMapping] = useState<Record<string, string>>(() =>
     Object.fromEntries(
-      relation?.columnMappings.map((item) => [
-        item.targetColumnId,
-        item.sourceColumnId,
-      ]) ?? [],
+      (relation?.sourceTableId === sourceId && relation.targetTableId === targetId
+        ? relation.columnMappings
+        : []
+      ).map((item) => [item.targetColumnId, item.sourceColumnId]),
     ),
   )
   const [error, setError] = useState('')
@@ -117,45 +173,16 @@ function RelationForm({ relation }: { relation: ErdRelation | undefined }) {
             columnMappings: candidate.columnMappings,
             ...(candidate.label ? { label: candidate.label } : {}),
           })
+        useCanvasInteractionStore.getState().cancelRelation()
         setError('')
       }}
     >
-      <label className="block">
-        FK 소유 테이블
-        <select
-          className="block w-full rounded border p-2"
-          value={sourceId}
-          onChange={(event) => {
-            setSourceId(event.target.value)
-            setMapping({})
-          }}
-        >
-          <option value="">선택하세요</option>
-          {store.project.tables.map((table) => (
-            <option key={table.id} value={table.id}>
-              {table.physicalName}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        참조 대상 테이블
-        <select
-          className="block w-full rounded border p-2"
-          value={targetId}
-          onChange={(event) => {
-            setTargetId(event.target.value)
-            setMapping({})
-          }}
-        >
-          <option value="">선택하세요</option>
-          {store.project.tables.map((table) => (
-            <option key={table.id} value={table.id}>
-              {table.physicalName}
-            </option>
-          ))}
-        </select>
-      </label>
+      <dl className="rounded bg-zinc-50 p-3 text-sm">
+        <dt className="text-zinc-500">FK 소유 테이블</dt>
+        <dd>{source?.physicalName}</dd>
+        <dt className="mt-2 text-zinc-500">참조 대상 테이블</dt>
+        <dd>{target?.physicalName}</dd>
+      </dl>
       {!targetKey && (
         <p className="text-xs text-zinc-600">참조 대상 테이블에 PK를 먼저 설정하세요.</p>
       )}
@@ -209,7 +236,7 @@ function RelationForm({ relation }: { relation: ErdRelation | undefined }) {
           <button
             className="ml-2 rounded border px-3 py-2"
             type="button"
-            onClick={() => store.selectRelation(null)}
+            onClick={() => useCanvasInteractionStore.getState().beginRelation()}
           >
             새 관계
           </button>
