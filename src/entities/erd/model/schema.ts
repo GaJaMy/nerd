@@ -33,13 +33,47 @@ export const displayOptionsSchema = z.object({
   showPhysicalName: z.boolean(),
 })
 
-export const mysqlDataTypeSchema = z.object({
-  length: z.number().int().positive().optional(),
-  name: z.string().trim().min(1),
-  precision: z.number().int().positive().optional(),
-  scale: z.number().int().nonnegative().optional(),
-  unsigned: z.boolean().optional(),
-})
+export const MYSQL_DATA_TYPES = [
+  'INT',
+  'BIGINT',
+  'VARCHAR',
+  'TEXT',
+  'DECIMAL',
+  'BOOLEAN',
+  'DATE',
+  'DATETIME',
+  'TIMESTAMP',
+] as const
+
+export const mysqlDataTypeSchema = z
+  .object({
+    length: z.number().int().positive().optional(),
+    name: z.enum(MYSQL_DATA_TYPES),
+    precision: z.number().int().positive().optional(),
+    scale: z.number().int().nonnegative().optional(),
+    unsigned: z.boolean().optional(),
+  })
+  .superRefine((type, context) => {
+    const invalid = (message: string) => context.addIssue({ code: 'custom', message })
+    if (type.name === 'VARCHAR') {
+      if (!type.length || type.length > 16383)
+        invalid('VARCHAR 길이는 1~16383이어야 합니다.')
+    } else if (type.length !== undefined)
+      invalid('길이는 VARCHAR에만 지정할 수 있습니다.')
+    if (type.name === 'DECIMAL') {
+      if (
+        type.precision === undefined ||
+        type.precision > 65 ||
+        type.scale === undefined ||
+        type.scale > 30 ||
+        type.scale > type.precision
+      )
+        invalid('DECIMAL 정밀도는 1~65, 소수 자릿수는 0~30이며 정밀도 이하여야 합니다.')
+    } else if (type.precision !== undefined || type.scale !== undefined)
+      invalid('정밀도와 소수 자릿수는 DECIMAL에만 지정할 수 있습니다.')
+    if (type.unsigned && type.name !== 'INT' && type.name !== 'BIGINT')
+      invalid('UNSIGNED는 INT와 BIGINT에만 지원합니다.')
+  })
 
 export const erdColumnSchema = z.object({
   comment: z.string().optional(),

@@ -1,5 +1,7 @@
 ﻿import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
+import { ColumnEditor } from '@/features/erd/edit-columns/ui/ColumnEditor'
+import { KeyEditor } from '@/features/erd/edit-key/ui/KeyEditor'
 import { ErdCanvas } from '@/widgets/erd-canvas'
 import { useErdEditorStore } from '@/entities/erd/model'
 
@@ -62,7 +64,17 @@ export function ErdEditorPage() {
               <div className="rounded-md border border-zinc-200 p-3">
                 <h2 className="text-sm font-semibold text-zinc-950">선택된 테이블</h2>
                 {selectedTable ? (
-                  <TableEditor key={selectedTable.id} table={selectedTable} />
+                  <div className="space-y-5">
+                    <TableEditor key={selectedTable.id} table={selectedTable} />
+                    <ColumnEditor
+                      key={`columns-${selectedTable.id}`}
+                      table={selectedTable}
+                    />
+                    <KeyEditor
+                      key={`${selectedTable.id}-${selectedTable.columns.map((column) => column.id).join(',')}`}
+                      table={selectedTable}
+                    />
+                  </div>
                 ) : (
                   <p className="mt-3 text-sm text-zinc-500">선택 없음</p>
                 )}

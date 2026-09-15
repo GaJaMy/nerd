@@ -213,7 +213,20 @@ export function updateErdColumnInTable(
     ...table,
     columns: sortColumnsByOrdinal(
       table.columns.map((column) =>
-        column.id === columnId ? erdColumnSchema.parse({ ...column, ...update }) : column,
+        column.id === columnId
+          ? erdColumnSchema.parse({
+              ...column,
+              ...update,
+              ...(project.keys.some(
+                (key) =>
+                  key.tableId === tableId &&
+                  key.type === 'primary' &&
+                  key.columnIds.includes(columnId),
+              )
+                ? { nullable: false }
+                : {}),
+            })
+          : column,
       ),
     ),
   })
@@ -281,6 +294,18 @@ export function upsertErdKeyInProject(
     project: parseProject({
       ...project,
       keys: [...keys, key],
+      tables: project.tables.map((table) =>
+        key.type === 'primary' && table.id === key.tableId
+          ? {
+              ...table,
+              columns: table.columns.map((column) =>
+                key.columnIds.includes(column.id)
+                  ? { ...column, nullable: false }
+                  : column,
+              ),
+            }
+          : table,
+      ),
     }),
   }
 }
