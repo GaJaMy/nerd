@@ -1,3 +1,4 @@
+﻿import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
 import { ErdCanvas } from '@/widgets/erd-canvas'
 import { useErdEditorStore } from '@/entities/erd/model'
@@ -61,20 +62,7 @@ export function ErdEditorPage() {
               <div className="rounded-md border border-zinc-200 p-3">
                 <h2 className="text-sm font-semibold text-zinc-950">선택된 테이블</h2>
                 {selectedTable ? (
-                  <dl className="mt-3 space-y-2 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <dt className="text-zinc-500">물리명</dt>
-                      <dd className="truncate font-medium text-zinc-950">
-                        {selectedTable.physicalName}
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <dt className="text-zinc-500">컬럼</dt>
-                      <dd className="font-medium text-zinc-950">
-                        {selectedTable.columns.length}개
-                      </dd>
-                    </div>
-                  </dl>
+                  <TableEditor key={selectedTable.id} table={selectedTable} />
                 ) : (
                   <p className="mt-3 text-sm text-zinc-500">선택 없음</p>
                 )}
