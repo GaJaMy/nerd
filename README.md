@@ -66,8 +66,3 @@ npm.cmd run build
 `check`는 포맷·린트·타입 검사·단위/컴포넌트 테스트를 실행합니다. E2E는 Chromium이 필요하며 최초 설치 시 `npx.cmd playwright install chromium`을 실행합니다. E2E 실행기는 로컬 서버를 시작하고 종료하며 변환 캐시를 `node_modules/.cache/playwright`에 둡니다.
 
 주요 기술은 React, TypeScript, Vite, React Flow, Zustand, Zod, Tailwind CSS입니다. 구현은 `app → pages → widgets → features → entities → shared` 방향으로 구성합니다.
-
-## 개발 문서
-
-- [캔버스 편집 요구사항](docs/canvas-interactions.md)
-- [문서 갱신·재독·순차 구현 및 커밋 절차](docs/development-workflow.md)
