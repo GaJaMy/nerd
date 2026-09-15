@@ -1,5 +1,6 @@
 ﻿import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
+import { RelationEditor } from '@/features/erd/edit-relation/ui/RelationEditor'
 import { ColumnEditor } from '@/features/erd/edit-columns/ui/ColumnEditor'
 import { KeyEditor } from '@/features/erd/edit-key/ui/KeyEditor'
 import { ErdCanvas } from '@/widgets/erd-canvas'
@@ -79,6 +80,7 @@ export function ErdEditorPage() {
                   <p className="mt-3 text-sm text-zinc-500">선택 없음</p>
                 )}
               </div>
+              <RelationEditor />
             </section>
           </aside>
         </div>

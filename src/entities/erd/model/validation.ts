@@ -21,6 +21,9 @@ export type ErdValidationIssue = {
     | 'missing-relation-target-table'
     | 'relation-target-key-mismatch'
     | 'schema'
+    | 'invalid-key-column'
+    | 'duplicate-relation-source-column'
+    | 'incompatible-relation-column'
   message: string
   path: Array<number | string>
 }
@@ -52,6 +55,7 @@ export function validateErdProject(project: ErdProject): ErdValidationIssue[] {
     ),
     ...findKeyReferenceIssues(validProject.keys, tableIndex, columnIndexByTableId),
     ...findDuplicatePrimaryKeyIssues(validProject.keys),
+    ...findMysqlConstraintIssues(validProject),
     ...findRelationReferenceIssues(
       validProject.relations,
       validProject.keys,
@@ -59,6 +63,62 @@ export function validateErdProject(project: ErdProject): ErdValidationIssue[] {
       columnIndexByTableId,
     ),
   ]
+}
+
+function findMysqlConstraintIssues(project: ErdProject): ErdValidationIssue[] {
+  const issues: ErdValidationIssue[] = []
+  for (const [index, key] of project.keys.entries()) {
+    const table = project.tables.find((table) => table.id === key.tableId)
+    for (const id of key.columnIds) {
+      const column = table?.columns.find((column) => column.id === id)
+      if (
+        column &&
+        (column.dataType.name === 'TEXT' || (key.type === 'primary' && column.nullable))
+      ) {
+        issues.push({
+          code: 'invalid-key-column',
+          message: `${table?.physicalName}.${column.physicalName}: TEXT는 키로 사용할 수 없으며 PK는 NOT NULL이어야 합니다.`,
+          path: ['keys', index],
+        })
+      }
+    }
+  }
+  for (const [index, relation] of project.relations.entries()) {
+    const source = project.tables.find((table) => table.id === relation.sourceTableId)
+    const target = project.tables.find((table) => table.id === relation.targetTableId)
+    const seen = new Set<string>()
+    for (const mapping of relation.columnMappings) {
+      if (seen.has(mapping.sourceColumnId))
+        issues.push({
+          code: 'duplicate-relation-source-column',
+          message: '하나의 관계에서 FK 컬럼을 중복 매핑할 수 없습니다.',
+          path: ['relations', index],
+        })
+      seen.add(mapping.sourceColumnId)
+      const left = source?.columns.find(
+        (column) => column.id === mapping.sourceColumnId,
+      )?.dataType
+      const right = target?.columns.find(
+        (column) => column.id === mapping.targetColumnId,
+      )?.dataType
+      if (
+        left &&
+        right &&
+        (left.name === 'TEXT' ||
+          left.name !== right.name ||
+          !!left.unsigned !== !!right.unsigned ||
+          left.precision !== right.precision ||
+          left.scale !== right.scale)
+      ) {
+        issues.push({
+          code: 'incompatible-relation-column',
+          message: `${source?.physicalName} → ${target?.physicalName}: FK와 참조 컬럼의 타입·정밀도·UNSIGNED가 일치해야 합니다.`,
+          path: ['relations', index],
+        })
+      }
+    }
+  }
+  return issues
 }
 
 function findDuplicateTablePhysicalNameIssues(tables: ErdTable[]): ErdValidationIssue[] {

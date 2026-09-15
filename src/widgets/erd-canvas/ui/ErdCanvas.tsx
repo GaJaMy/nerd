@@ -3,6 +3,8 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  Handle,
+  Position,
   MiniMap,
   ReactFlow,
   type NodeChange,
@@ -10,8 +12,13 @@ import {
   type NodeTypes,
 } from '@xyflow/react'
 import type { CanvasPosition, DisplayOptions, ErdTable } from '@/entities/erd/model'
+import { useErdEditorStore } from '@/entities/erd/model'
 import { ErdTableCard } from '@/entities/erd/ui'
-import { toErdTableFlowNodes, type ErdTableFlowNode } from '../lib/erd-flow-adapter'
+import {
+  toErdTableFlowNodes,
+  toErdRelationFlowEdges,
+  type ErdTableFlowNode,
+} from '../lib/erd-flow-adapter'
 
 type ErdCanvasProps = {
   displayOptions: DisplayOptions
@@ -32,9 +39,14 @@ export function ErdCanvas({
   selectedTableId,
   tables,
 }: ErdCanvasProps) {
+  const keys = useErdEditorStore((state) => state.project.keys)
+  const relations = useErdEditorStore((state) => state.project.relations)
+  const selectedRelationId = useErdEditorStore((state) => state.selectedRelationId)
+  const selectRelation = useErdEditorStore((state) => state.selectRelation)
   const nodes = useMemo(
-    () => toErdTableFlowNodes({ displayOptions, selectedTableId, tables }),
-    [displayOptions, selectedTableId, tables],
+    () =>
+      toErdTableFlowNodes({ displayOptions, selectedTableId, tables, keys, relations }),
+    [displayOptions, selectedTableId, tables, keys, relations],
   )
 
   const handleNodesChange = useCallback(
@@ -65,7 +77,10 @@ export function ErdCanvas({
 
       <ReactFlow
         colorMode="light"
-        edges={[]}
+        edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
+        onEdgeClick={(_, edge) => selectRelation(edge.id)}
+        nodesConnectable={false}
+        deleteKeyCode={null}
         fitView
         maxZoom={1.6}
         minZoom={0.35}
@@ -90,10 +105,16 @@ export function ErdCanvas({
 
 function ErdTableNode({ data, selected }: NodeProps<ErdTableFlowNode>) {
   return (
-    <ErdTableCard
-      displayOptions={data.displayOptions}
-      selected={selected}
-      table={data.table}
-    />
+    <>
+      <Handle type="target" position={Position.Left} />
+      <ErdTableCard
+        displayOptions={data.displayOptions}
+        selected={selected}
+        table={data.table}
+        keys={data.keys}
+        relations={data.relations}
+      />
+      <Handle type="source" position={Position.Right} />
+    </>
   )
 }

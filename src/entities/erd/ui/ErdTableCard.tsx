@@ -1,17 +1,21 @@
 ﻿import { Table2 } from 'lucide-react'
-import type { DisplayOptions, ErdTable } from '@/entities/erd/model'
+import type { DisplayOptions, ErdTable, ErdKey, ErdRelation } from '@/entities/erd/model'
 import { cn } from '@/shared/lib/cn'
 
 type ErdTableCardProps = {
   displayOptions: DisplayOptions
   selected?: boolean
   table: ErdTable
+  keys?: ErdKey[]
+  relations?: ErdRelation[]
 }
 
 export function ErdTableCard({
   displayOptions,
   selected = false,
   table,
+  keys = [],
+  relations = [],
 }: ErdTableCardProps) {
   const title = getTableTitle(table, displayOptions)
   const secondaryName =
@@ -51,6 +55,34 @@ export function ErdTableCard({
           <ul className="divide-y divide-zinc-100">
             {table.columns.map((column) => (
               <li className="flex min-h-8 items-center gap-2 py-1.5" key={column.id}>
+                {keys
+                  .filter(
+                    (key) =>
+                      key.tableId === table.id &&
+                      key.type === 'primary' &&
+                      key.columnIds.includes(column.id),
+                  )
+                  .map((key) => (
+                    <span key={key.id} className="text-xs font-semibold text-teal-700">
+                      PK {key.columnIds.indexOf(column.id) + 1}
+                    </span>
+                  ))}
+                {relations
+                  .filter(
+                    (relation) =>
+                      relation.sourceTableId === table.id &&
+                      relation.columnMappings.some(
+                        (mapping) => mapping.sourceColumnId === column.id,
+                      ),
+                  )
+                  .map((relation) => (
+                    <span key={relation.id} className="text-xs text-indigo-700">
+                      FK{' '}
+                      {[...relation.columnMappings]
+                        .sort((a, b) => a.ordinal - b.ordinal)
+                        .findIndex((mapping) => mapping.sourceColumnId === column.id) + 1}
+                    </span>
+                  ))}
                 <span className="min-w-0 flex-1 truncate text-xs font-medium text-zinc-700">
                   {getColumnTitle(column, displayOptions)}
                 </span>
