@@ -1,5 +1,6 @@
 import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
+import { DdlExport } from '@/features/erd/export-ddl/ui/DdlExport'
 import { useState } from 'react'
 import { ErdNavigation } from '@/widgets/erd-navigation/ui/ErdNavigation'
 import { RelationEditor } from '@/features/erd/edit-relation/ui/RelationEditor'
@@ -96,6 +97,7 @@ export function ErdEditorPage() {
                 )}
               </div>
               <RelationEditor />
+              <DdlExport />
             </section>
           </aside>
         </div>
