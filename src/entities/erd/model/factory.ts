@@ -30,6 +30,7 @@ export type CreateErdProjectInput = {
 }
 
 export type CreateErdTableInput = {
+  size?: NonNullable<ErdTable['size']>
   columns?: ErdColumn[]
   comment?: string
   hidden?: boolean
@@ -105,6 +106,7 @@ export function createErdTable(input: CreateErdTableInput = {}): ErdTable {
     id: input.id ?? createId('table'),
     physicalName: input.physicalName ?? 'table_1',
     position: input.position ?? { x: 0, y: 0 },
+    ...(input.size ? { size: input.size } : {}),
     ...(input.comment === undefined ? {} : { comment: input.comment }),
     ...(input.logicalName === undefined ? {} : { logicalName: input.logicalName }),
   })

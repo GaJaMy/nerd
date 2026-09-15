@@ -1,5 +1,6 @@
+import { CanvasTools } from '@/features/erd/canvas-interaction/ui/CanvasTools'
 import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
-import { Plus, Table2 } from 'lucide-react'
+import { Table2 } from 'lucide-react'
 import { ErdValidation } from '@/widgets/erd-validation/ui/ErdValidation'
 import { DdlExport } from '@/features/erd/export-ddl/ui/DdlExport'
 import { useState } from 'react'
@@ -17,7 +18,7 @@ export function ErdEditorPage() {
   } | null>(null)
   const project = useErdEditorStore((state) => state.project)
   const selectedTableId = useErdEditorStore((state) => state.selectedTableId)
-  const addTable = useErdEditorStore((state) => state.addTable)
+
   const moveTable = useErdEditorStore((state) => state.moveTable)
   const selectTable = useErdEditorStore((state) => state.selectTable)
   const selectedTable =
@@ -32,20 +33,7 @@ export function ErdEditorPage() {
             <p className="text-sm text-zinc-500">{project.name}</p>
           </div>
 
-          <button
-            className="ml-auto inline-flex h-10 items-center gap-2 rounded-md bg-zinc-950 px-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:ring-2 focus:ring-teal-600/25 focus:outline-none"
-            onClick={() => {
-              const table = addTable()
-              setFocusRequest((previous) => ({
-                tableId: table.id,
-                sequence: (previous?.sequence ?? 0) + 1,
-              }))
-            }}
-            type="button"
-          >
-            <Plus aria-hidden="true" className="h-4 w-4" />
-            <span>테이블 추가</span>
-          </button>
+          <CanvasTools />
         </header>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(300px,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-1">

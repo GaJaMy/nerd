@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, within, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useErdEditorStore } from '@/entities/erd/model'
 import { renderWithClient } from '@/shared/testing/render'
@@ -9,16 +9,19 @@ describe('ErdEditorPage', () => {
     useErdEditorStore.getState().resetProject()
   })
 
-  it('shows an empty ERD editor and adds a table to the canvas', async () => {
-    const user = userEvent.setup()
-
+  it('shows an empty ERD editor and reflects a drawn table', () => {
     renderWithClient(<ErdEditorPage />)
 
     expect(screen.getByRole('heading', { name: 'ERD 편집기' })).toBeInTheDocument()
     expect(screen.getByText('테이블 0개')).toBeInTheDocument()
     expect(screen.getByText('선택 없음')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '테이블 추가' }))
+    expect(screen.queryByRole('button', { name: '테이블 추가' })).not.toBeInTheDocument()
+    act(() => {
+      useErdEditorStore
+        .getState()
+        .addTable({ position: { x: 40, y: 50 }, size: { width: 360, height: 180 } })
+    })
 
     const tableNode = screen.getByTestId('erd-table-node-table_1')
 

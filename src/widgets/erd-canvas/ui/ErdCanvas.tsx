@@ -19,6 +19,8 @@ import {
 import type { CanvasPosition, DisplayOptions, ErdTable } from '@/entities/erd/model'
 import { useErdEditorStore } from '@/entities/erd/model'
 import { ErdTableCard } from '@/entities/erd/ui'
+import { useCanvasInteractionStore } from '@/features/erd/canvas-interaction/model/use-canvas-interaction-store'
+import { getDrawnTable } from '../lib/draw-table'
 import {
   toErdTableFlowNodes,
   toErdRelationFlowEdges,
@@ -77,6 +79,24 @@ function ErdCanvasContent({
   tables,
   focusRequest,
 }: ErdCanvasProps) {
+  const mode = useCanvasInteractionStore((state) => state.mode)
+  const addTable = useErdEditorStore((state) => state.addTable)
+  const [drawing, setDrawing] = useState<{
+    start: CanvasPosition
+    end: CanvasPosition
+    pointerId: number
+  } | null>(null)
+  useEffect(() => {
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setDrawing(null)
+    }
+    window.addEventListener('keydown', cancel)
+    const unsubscribe = useCanvasInteractionStore.subscribe(() => setDrawing(null))
+    return () => {
+      window.removeEventListener('keydown', cancel)
+      unsubscribe()
+    }
+  }, [])
   const [measurements, setMeasurements] = useState<
     Record<string, { width: number; height: number }>
   >({})
@@ -132,17 +152,60 @@ function ErdCanvasContent({
       aria-label="ERD 캔버스"
       className="relative min-h-0 flex-1 overflow-hidden border border-slate-700 bg-slate-950"
       data-testid="erd-canvas"
+      onContextMenu={(event) => event.preventDefault()}
+      onPointerDownCapture={(event) => {
+        if (
+          mode !== 'draw' ||
+          event.button !== 0 ||
+          !(event.target instanceof Element) ||
+          !event.target.classList.contains('react-flow__pane')
+        )
+          return
+        event.preventDefault()
+        event.stopPropagation()
+        const rect = event.currentTarget.getBoundingClientRect()
+        const point = { x: event.clientX - rect.left, y: event.clientY - rect.top }
+        event.currentTarget.setPointerCapture(event.pointerId)
+        setDrawing({ start: point, end: point, pointerId: event.pointerId })
+      }}
+      onPointerMove={(event) => {
+        if (!drawing || drawing.pointerId !== event.pointerId) return
+        const rect = event.currentTarget.getBoundingClientRect()
+        setDrawing({
+          ...drawing,
+          end: { x: event.clientX - rect.left, y: event.clientY - rect.top },
+        })
+      }}
+      onPointerUp={(event) => {
+        if (!drawing || drawing.pointerId !== event.pointerId) return
+        const rect = event.currentTarget.getBoundingClientRect()
+        const result = getDrawnTable(
+          drawing.start,
+          { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          viewport,
+        )
+        setDrawing(null)
+        if (event.currentTarget.hasPointerCapture(event.pointerId))
+          event.currentTarget.releasePointerCapture(event.pointerId)
+        if (result && mode === 'draw') addTable(result)
+      }}
+      onPointerCancel={() => setDrawing(null)}
+      onLostPointerCapture={() => setDrawing(null)}
     >
       {tables.length === 0 ? (
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
           <div className="rounded-md border border-dashed border-slate-600 bg-slate-900/90 px-5 py-4 text-center shadow-sm">
             <p className="text-sm font-medium text-slate-100">테이블이 없습니다</p>
-            <p className="mt-1 text-xs text-slate-400">상단에서 새 테이블을 추가하세요</p>
+            <p className="mt-1 text-xs text-slate-400">
+              빈 공간을 드래그해 테이블을 그리세요
+            </p>
           </div>
         </div>
       ) : null}
 
       <ReactFlow
+        panOnDrag={mode === 'pan' ? true : [1, 2]}
+        selectionOnDrag={false}
         colorMode="dark"
         edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
         edgeTypes={edgeTypes}
@@ -174,6 +237,29 @@ function ErdCanvasContent({
         <MiniMap className="hidden lg:block" pannable position="bottom-left" zoomable />
         <Controls position="bottom-right" />
       </ReactFlow>
+      <p className="pointer-events-none absolute top-3 left-3 rounded bg-slate-900/90 px-3 py-2 text-xs text-slate-300">
+        {mode === 'draw'
+          ? '드래그: 테이블 그리기 · 가운데/오른쪽 드래그: 이동 · Esc: 취소'
+          : '빈 공간을 드래그해 화면 이동'}
+      </p>
+      {drawing && mode === 'draw' && (
+        <div
+          data-testid="table-drawing-preview"
+          className="pointer-events-none absolute rounded border-2 border-dashed border-teal-300 bg-teal-400/10"
+          style={{
+            left: Math.min(drawing.start.x, drawing.end.x),
+            top: Math.min(drawing.start.y, drawing.end.y),
+            width: Math.max(
+              360 * viewport.zoom,
+              Math.abs(drawing.end.x - drawing.start.x),
+            ),
+            height: Math.max(
+              140 * viewport.zoom,
+              Math.abs(drawing.end.y - drawing.start.y),
+            ),
+          }}
+        />
+      )}
     </section>
   )
 }

@@ -1,6 +1,47 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 import { readFile } from 'node:fs/promises'
+
+async function drawTable(page: Page, offset = 0) {
+  const canvas = await page.getByTestId('erd-canvas').boundingBox()
+  if (!canvas) throw new Error('Canvas missing')
+  const x = canvas.x + (canvas.width < 500 ? 12 : 40) + offset
+  const y = canvas.y + 70
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(Math.min(x + 360, canvas.x + canvas.width - 12), y + 160, {
+    steps: 8,
+  })
+  await page.mouse.up()
+}
+
+test('cancels drawing and keeps pan gestures separate from table creation', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const canvas = (await page.getByTestId('erd-canvas').boundingBox())!
+  await page.mouse.click(canvas.x + 50, canvas.y + 70)
+  await expect(page.getByText('테이블 0개')).toBeVisible()
+  await page.mouse.move(canvas.x + 50, canvas.y + 70)
+  await page.mouse.down()
+  await page.mouse.move(canvas.x + 350, canvas.y + 250)
+  await expect(page.getByTestId('table-drawing-preview')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.mouse.up()
+  await expect(page.getByText('테이블 0개')).toBeVisible()
+  await page.getByRole('button', { name: '화면 이동', exact: true }).click()
+  const before = await page.locator('.react-flow__viewport').getAttribute('style')
+  await drawTable(page)
+  await expect(page.locator('.react-flow__viewport')).not.toHaveAttribute(
+    'style',
+    before!,
+  )
+  await expect(page.getByText('테이블 0개')).toBeVisible()
+  await page.getByRole('button', { name: '테이블 그리기', exact: true }).click()
+  await page.getByRole('button', { name: 'Zoom Out', exact: true }).click()
+  await drawTable(page)
+  await expect(page.getByTestId('erd-table-node-table_1')).toBeInViewport()
+})
 
 test('adds a table to the ERD canvas', async ({ page }) => {
   await page.goto('/')
@@ -8,7 +49,7 @@ test('adds a table to the ERD canvas', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'ERD 편집기' })).toBeVisible()
   await expect(page.getByTestId('erd-canvas')).toBeVisible()
 
-  await page.getByRole('button', { name: '테이블 추가' }).click()
+  await drawTable(page)
 
   await expect(page.getByTestId('erd-table-node-table_1')).toBeVisible()
   await expect(page.getByText('테이블 1개')).toBeVisible()
@@ -20,7 +61,7 @@ test('adds a table to the ERD canvas', async ({ page }) => {
 test('designs a composite relation and downloads MySQL DDL', async ({ page }) => {
   await page.goto('/')
   for (const name of ['parents', 'children']) {
-    await page.getByRole('button', { name: '테이블 추가' }).click()
+    await drawTable(page, name === 'children' ? 440 : 0)
     await page.getByLabel('테이블 물리명', { exact: true }).fill(name)
     await page.getByRole('button', { name: '컬럼 추가' }).click()
     await page.getByRole('button', { name: '컬럼 추가' }).click()
@@ -66,7 +107,7 @@ test('moves, hides, and focuses a table and resets volatile data on reload', asy
   page,
 }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: '테이블 추가' }).click()
+  await drawTable(page)
   const node = page.getByTestId('erd-table-node-table_1')
   const before = await node.boundingBox()
   if (!before) throw new Error('Table node is missing')
@@ -100,7 +141,7 @@ test('moves, hides, and focuses a table and resets volatile data on reload', asy
 test('keeps the canvas and editor usable on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
-  await page.getByRole('button', { name: '테이블 추가' }).click()
+  await drawTable(page)
   await expect(page.getByTestId('erd-table-node-table_1')).toBeInViewport()
   await page.getByLabel('테이블 물리명', { exact: true }).fill('mobile_table')
   await expect(page.getByTestId('erd-table-node-mobile_table')).toBeInViewport()
