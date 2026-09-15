@@ -1,4 +1,4 @@
-﻿import { screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useErdEditorStore } from '@/entities/erd/model'
 import { renderWithClient } from '@/shared/testing/render'
@@ -24,7 +24,7 @@ describe('ErdEditorPage', () => {
 
     expect(tableNode).toBeInTheDocument()
     expect(screen.getByText('테이블 1개')).toBeInTheDocument()
-    expect(within(tableNode).getByText('table_1')).toBeInTheDocument()
+    expect(within(tableNode).getByDisplayValue('table_1')).toBeInTheDocument()
   })
 
   it('edits table metadata, rejects duplicate names, and confirms deletion', async () => {
@@ -35,11 +35,9 @@ describe('ErdEditorPage', () => {
     const name = screen.getByLabelText('테이블 물리명')
     await user.clear(name)
     await user.type(name, 'users')
-    await user.click(screen.getByRole('button', { name: '테이블 적용' }))
     expect(screen.getByRole('alert')).toHaveTextContent('중복')
     await user.clear(name)
     await user.type(name, 'orders')
-    await user.click(screen.getByRole('button', { name: '테이블 적용' }))
     expect(screen.getByTestId('erd-table-node-orders')).toBeInTheDocument()
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
     await user.click(screen.getByRole('button', { name: '테이블 삭제' }))

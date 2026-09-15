@@ -6,6 +6,7 @@ import {
   type ErdColumn,
   type ErdTable,
 } from '@/entities/erd/model'
+import { ErdNameInput } from '@/entities/erd/ui/ErdNameInput'
 
 export function ColumnEditor({ table }: { table: ErdTable }) {
   const store = useErdEditorStore()
@@ -56,12 +57,8 @@ function ColumnForm({ column, table }: { column: ErdColumn; table: ErdTable }) {
       onSubmit={(event) => {
         event.preventDefault()
         const data = new FormData(event.currentTarget)
-        const logical = data.get('logicalName')
         const parsed = erdColumnSchema.safeParse({
           ...column,
-          physicalName: data.get('physicalName'),
-          logicalName:
-            typeof logical === 'string' ? logical.trim() || undefined : undefined,
           comment: data.get('comment'),
           nullable: !primary && data.has('nullable'),
           dataType: {
@@ -96,23 +93,24 @@ function ColumnForm({ column, table }: { column: ErdColumn; table: ErdTable }) {
         setError('')
       }}
     >
-      <label className="block">
+      <div>
         컬럼 물리명
-        <input
-          className="block w-full rounded border p-1"
-          name="physicalName"
-          defaultValue={column.physicalName}
-          required
+        <ErdNameInput
+          tableId={table.id}
+          columnId={column.id}
+          field="physicalName"
+          label="컬럼 물리명"
         />
-      </label>
-      <label className="block">
+      </div>
+      <div>
         컬럼 논리명
-        <input
-          className="block w-full rounded border p-1"
-          name="logicalName"
-          defaultValue={column.logicalName}
+        <ErdNameInput
+          tableId={table.id}
+          columnId={column.id}
+          field="logicalName"
+          label="컬럼 논리명"
         />
-      </label>
+      </div>
       <label className="block">
         데이터 타입
         <select

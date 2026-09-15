@@ -1,5 +1,6 @@
 import type { DisplayOptions, ErdTable, ErdKey, ErdRelation } from '@/entities/erd/model'
 import { cn } from '@/shared/lib/cn'
+import { ErdNameInput } from './ErdNameInput'
 import { formatMysqlType } from '@/entities/erd/model/mysql-ddl'
 
 type ErdTableCardProps = {
@@ -34,17 +35,23 @@ export function ErdTableCard({
         {showLogical && (
           <div className="min-w-0 p-3">
             <span className="mb-1 block text-xs text-slate-400">논리명</span>
-            <span className="block text-sm font-semibold break-words">
-              {table.logicalName || '논리명 입력'}
-            </span>
+            <ErdNameInput
+              tableId={table.id}
+              field="logicalName"
+              label="캔버스 테이블 논리명"
+              dark
+            />
           </div>
         )}
         {showPhysical && (
           <div className="min-w-0 p-3">
             <span className="mb-1 block text-xs text-slate-400">물리명</span>
-            <span className="block text-sm font-semibold break-words">
-              {table.physicalName}
-            </span>
+            <ErdNameInput
+              tableId={table.id}
+              field="physicalName"
+              label="캔버스 테이블 물리명"
+              dark
+            />
           </div>
         )}
       </header>
@@ -65,12 +72,22 @@ export function ErdTableCard({
           <li className="space-y-1 px-3 py-2" key={column.id}>
             <div className={cn('grid gap-3 text-sm', nameColumns)}>
               {showLogical && (
-                <span className="min-w-0 break-words">
-                  {column.logicalName || '논리명 입력'}
-                </span>
+                <ErdNameInput
+                  tableId={table.id}
+                  columnId={column.id}
+                  field="logicalName"
+                  label="캔버스 컬럼 논리명"
+                  dark
+                />
               )}
               {showPhysical && (
-                <span className="min-w-0 break-words">{column.physicalName}</span>
+                <ErdNameInput
+                  tableId={table.id}
+                  columnId={column.id}
+                  field="physicalName"
+                  label="캔버스 컬럼 물리명"
+                  dark
+                />
               )}
             </div>
             <div className="flex flex-wrap gap-2 text-xs">

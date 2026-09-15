@@ -1,4 +1,4 @@
-﻿import { expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import { readFile } from 'node:fs/promises'
 
@@ -13,7 +13,7 @@ test('adds a table to the ERD canvas', async ({ page }) => {
   await expect(page.getByTestId('erd-table-node-table_1')).toBeVisible()
   await expect(page.getByText('테이블 1개')).toBeVisible()
   await expect(
-    page.getByTestId('erd-table-node-table_1').getByText('table_1'),
+    page.getByTestId('erd-table-node-table_1').getByLabel('캔버스 테이블 물리명'),
   ).toBeVisible()
 })
 
@@ -21,8 +21,7 @@ test('designs a composite relation and downloads MySQL DDL', async ({ page }) =>
   await page.goto('/')
   for (const name of ['parents', 'children']) {
     await page.getByRole('button', { name: '테이블 추가' }).click()
-    await page.getByLabel('테이블 물리명').fill(name)
-    await page.getByRole('button', { name: '테이블 적용' }).click()
+    await page.getByLabel('테이블 물리명', { exact: true }).fill(name)
     await page.getByRole('button', { name: '컬럼 추가' }).click()
     await page.getByRole('button', { name: '컬럼 추가' }).click()
     if (name === 'parents') {
@@ -103,8 +102,7 @@ test('keeps the canvas and editor usable on a narrow screen', async ({ page }) =
   await page.goto('/')
   await page.getByRole('button', { name: '테이블 추가' }).click()
   await expect(page.getByTestId('erd-table-node-table_1')).toBeInViewport()
-  await page.getByLabel('테이블 물리명').fill('mobile_table')
-  await page.getByRole('button', { name: '테이블 적용' }).click()
+  await page.getByLabel('테이블 물리명', { exact: true }).fill('mobile_table')
   await expect(page.getByTestId('erd-table-node-mobile_table')).toBeInViewport()
   await page.screenshot({ path: 'test-results/erd-mobile.png', fullPage: true })
 })
