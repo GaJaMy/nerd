@@ -11,6 +11,7 @@ import {
 } from './factory'
 import {
   erdColumnSchema,
+  canvasViewportSchema,
   erdKeySchema,
   erdProjectSchema,
   erdRelationSchema,
@@ -89,7 +90,7 @@ export function updateErdProjectViewport(
   project: ErdProject,
   viewport: CanvasViewport,
 ): ErdProject {
-  return parseProject({ ...project, viewport })
+  return { ...project, viewport: canvasViewportSchema.parse(viewport) }
 }
 
 export function updateErdProjectDisplayOptions(

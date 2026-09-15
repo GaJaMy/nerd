@@ -1,5 +1,7 @@
-﻿import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
+import { TableEditor } from '@/features/erd/edit-table/ui/TableEditor'
 import { Plus, Table2 } from 'lucide-react'
+import { useState } from 'react'
+import { ErdNavigation } from '@/widgets/erd-navigation/ui/ErdNavigation'
 import { RelationEditor } from '@/features/erd/edit-relation/ui/RelationEditor'
 import { ColumnEditor } from '@/features/erd/edit-columns/ui/ColumnEditor'
 import { KeyEditor } from '@/features/erd/edit-key/ui/KeyEditor'
@@ -7,6 +9,10 @@ import { ErdCanvas } from '@/widgets/erd-canvas'
 import { useErdEditorStore } from '@/entities/erd/model'
 
 export function ErdEditorPage() {
+  const [focusRequest, setFocusRequest] = useState<{
+    tableId: string
+    sequence: number
+  } | null>(null)
   const project = useErdEditorStore((state) => state.project)
   const selectedTableId = useErdEditorStore((state) => state.selectedTableId)
   const addTable = useErdEditorStore((state) => state.addTable)
@@ -16,7 +22,7 @@ export function ErdEditorPage() {
     project.tables.find((table) => table.id === selectedTableId) ?? null
 
   return (
-    <main className="flex min-h-[calc(100svh-65px)] flex-1 flex-col bg-zinc-100">
+    <main className="flex h-[calc(100svh-65px)] min-h-[600px] flex-col bg-zinc-100">
       <div className="flex min-h-0 flex-1 flex-col">
         <header className="flex flex-wrap items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3">
           <div className="min-w-0">
@@ -36,20 +42,29 @@ export function ErdEditorPage() {
           </button>
         </header>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(300px,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] lg:grid-rows-1">
           <ErdCanvas
             displayOptions={project.displayOptions}
             onSelectTable={selectTable}
             onTablePositionChange={moveTable}
             selectedTableId={selectedTableId}
             tables={project.tables}
+            focusRequest={focusRequest}
           />
 
           <aside
             aria-label="ERD 보조 패널"
-            className="border-t border-zinc-200 bg-white p-4 lg:border-t-0 lg:border-l"
+            className="overflow-y-auto border-t border-zinc-200 bg-white p-4 lg:border-t-0 lg:border-l"
           >
             <section className="space-y-4">
+              <ErdNavigation
+                onFocus={(tableId) =>
+                  setFocusRequest((previous) => ({
+                    tableId,
+                    sequence: (previous?.sequence ?? 0) + 1,
+                  }))
+                }
+              />
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-teal-700 text-white">
                   <Table2 aria-hidden="true" className="h-4 w-4" />

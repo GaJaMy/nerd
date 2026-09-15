@@ -197,7 +197,7 @@ export const useErdEditorStore = create<ErdEditorStore>((set, get) => {
       })
     },
     setViewport: (viewport) => {
-      commitProject(updateErdProjectViewport(get().project, viewport))
+      set({ project: updateErdProjectViewport(get().project, viewport) })
     },
     updateColumn: (tableId, columnId, update) => {
       commitProject(updateErdColumnInTable(get().project, tableId, columnId, update))

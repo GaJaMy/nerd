@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 const host = '127.0.0.1'
 const port = '4174'
@@ -60,7 +61,12 @@ const runPlaywright = () =>
         '--config=playwright.e2e.config.mjs',
       ],
       {
-        env: { ...process.env },
+        env: {
+          ...process.env,
+          PWTEST_CACHE_DIR: fileURLToPath(
+            new URL('../node_modules/.cache/playwright', import.meta.url),
+          ),
+        },
         stdio: 'inherit',
       },
     )

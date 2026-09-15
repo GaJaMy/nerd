@@ -19,7 +19,9 @@ export function ErdTableCard({
 }: ErdTableCardProps) {
   const title = getTableTitle(table, displayOptions)
   const secondaryName =
-    displayOptions.showPhysicalName && table.logicalName ? table.physicalName : null
+    displayOptions.showPhysicalName && displayOptions.showLogicalName && table.logicalName
+      ? table.physicalName
+      : null
 
   return (
     <article
@@ -84,11 +86,26 @@ export function ErdTableCard({
                     </span>
                   ))}
                 <span className="min-w-0 flex-1 truncate text-xs font-medium text-zinc-700">
-                  {getColumnTitle(column, displayOptions)}
+                  {displayOptions.showLogicalName && column.logicalName && (
+                    <span className="block">{column.logicalName}</span>
+                  )}
+                  {displayOptions.showPhysicalName && (
+                    <span className="block">{column.physicalName}</span>
+                  )}
+                  {displayOptions.showComment && column.comment && (
+                    <span className="block font-normal text-zinc-500">
+                      {column.comment}
+                    </span>
+                  )}
                 </span>
                 {displayOptions.showDataType ? (
                   <span className="shrink-0 text-[11px] text-zinc-500">
                     {column.dataType.name}
+                    {column.dataType.length ? `(${column.dataType.length})` : ''}
+                    {column.dataType.precision
+                      ? `(${column.dataType.precision}, ${column.dataType.scale})`
+                      : ''}
+                    {column.dataType.unsigned ? ' UNSIGNED' : ''}
                   </span>
                 ) : null}
               </li>
@@ -108,15 +125,4 @@ function getTableTitle(table: ErdTable, displayOptions: DisplayOptions) {
   }
 
   return table.physicalName
-}
-
-function getColumnTitle(
-  column: ErdTable['columns'][number],
-  displayOptions: DisplayOptions,
-) {
-  if (displayOptions.showLogicalName && column.logicalName) {
-    return column.logicalName
-  }
-
-  return column.physicalName
 }
