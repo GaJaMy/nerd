@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { useErdEditorStore } from '@/entities/erd/model'
 
 type BaseMode = 'draw' | 'pan'
+type ToolPanel = 'search' | 'relation' | 'ddl' | 'validation' | null
+type Cardinality = 'one-to-one' | 'one-to-many'
 type RelationDraft = {
   relationId: string | null
   sourceTableId: string | null
@@ -12,8 +14,11 @@ type CanvasInteractionStore = {
   mode: BaseMode | 'relation'
   returnMode: BaseMode
   relationDraft: RelationDraft | null
+  toolPanel: ToolPanel
+  cardinality: Cardinality
+  setToolPanel: (panel: ToolPanel) => void
   setMode: (mode: BaseMode) => void
-  beginRelation: (relationId?: string) => void
+  beginRelation: (relationId?: string, cardinality?: Cardinality) => void
   pickRelationTable: (tableId: string) => void
   cancelRelation: () => void
 }
@@ -22,11 +27,16 @@ export const useCanvasInteractionStore = create<CanvasInteractionStore>((set, ge
   mode: 'draw',
   returnMode: 'draw',
   relationDraft: null,
+  toolPanel: null,
+  cardinality: 'one-to-many',
+  setToolPanel: (toolPanel) => set({ toolPanel }),
   setMode: (mode) => set({ mode, returnMode: mode, relationDraft: null }),
-  beginRelation: (relationId) => {
+  beginRelation: (relationId, cardinality = 'one-to-many') => {
     const { mode, returnMode } = get()
     set({
       mode: 'relation',
+      toolPanel: 'relation',
+      cardinality,
       returnMode: mode === 'relation' ? returnMode : mode,
       relationDraft: {
         relationId: relationId ?? null,
@@ -58,6 +68,11 @@ export const useCanvasInteractionStore = create<CanvasInteractionStore>((set, ge
 /** Connect volatile interaction state to domain lifecycle while the editor is mounted. */
 export function subscribeToRelationEndpoints() {
   return useErdEditorStore.subscribe(({ project }, previous) => {
+    if (project.id !== previous.project.id) {
+      useCanvasInteractionStore.getState().setMode('draw')
+      useCanvasInteractionStore.getState().setToolPanel(null)
+      return
+    }
     const { relationDraft, cancelRelation } = useCanvasInteractionStore.getState()
     if (!relationDraft) return
     const missingTable = [relationDraft.sourceTableId, relationDraft.targetTableId].some(
@@ -67,7 +82,6 @@ export function subscribeToRelationEndpoints() {
     const missingRelation =
       relationDraft.relationId !== null &&
       !project.relations.some((relation) => relation.id === relationDraft.relationId)
-    if (missingTable || missingRelation || project.id !== previous.project.id)
-      cancelRelation()
+    if (missingTable || missingRelation) cancelRelation()
   })
 }

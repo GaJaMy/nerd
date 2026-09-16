@@ -73,24 +73,28 @@ function ColumnForm({ column, table }: { column: ErdColumn; table: ErdTable }) {
         setError('')
       }}
     >
-      <div>
-        컬럼 물리명
-        <ErdNameInput
-          tableId={table.id}
-          columnId={column.id}
-          field="physicalName"
-          label="컬럼 물리명"
-        />
-      </div>
-      <div>
-        컬럼 논리명
-        <ErdNameInput
-          tableId={table.id}
-          columnId={column.id}
-          field="logicalName"
-          label="컬럼 논리명"
-        />
-      </div>
+      {store.project.displayOptions.showPhysicalName && (
+        <div>
+          컬럼 물리명
+          <ErdNameInput
+            tableId={table.id}
+            columnId={column.id}
+            field="physicalName"
+            label="컬럼 물리명"
+          />
+        </div>
+      )}
+      {store.project.displayOptions.showLogicalName && (
+        <div>
+          컬럼 논리명
+          <ErdNameInput
+            tableId={table.id}
+            columnId={column.id}
+            field="logicalName"
+            label="컬럼 논리명"
+          />
+        </div>
+      )}
       <label className="block">
         데이터 타입
         <select

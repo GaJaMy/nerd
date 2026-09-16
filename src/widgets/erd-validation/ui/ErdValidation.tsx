@@ -1,4 +1,5 @@
 import { useErdEditorStore } from '@/entities/erd/model'
+import { useCanvasInteractionStore } from '@/features/erd/canvas-interaction/model/use-canvas-interaction-store'
 
 export function ErdValidation() {
   const store = useErdEditorStore()
@@ -22,6 +23,9 @@ export function ErdValidation() {
               onClick={() => {
                 const itemIndex = issue.path[1]
                 if (typeof itemIndex !== 'number') return
+                useCanvasInteractionStore
+                  .getState()
+                  .setToolPanel(issue.path[0] === 'relations' ? 'relation' : null)
                 if (issue.path[0] === 'relations')
                   store.selectRelation(store.project.relations[itemIndex]?.id ?? null)
                 else if (issue.path[0] === 'keys')

@@ -219,6 +219,7 @@ function ErdCanvasContent({
           if (mode === 'relation') return
           useCanvasInteractionStore.getState().cancelRelation()
           selectRelation(edge.id)
+          useCanvasInteractionStore.getState().setToolPanel('relation')
         }}
         nodesConnectable={false}
         deleteKeyCode={null}
@@ -249,7 +250,10 @@ function ErdCanvasContent({
         <MiniMap className="hidden lg:block" pannable position="bottom-left" zoomable />
         <Controls position="bottom-right" />
       </ReactFlow>
-      <p className="pointer-events-none absolute top-3 left-3 rounded bg-slate-900/90 px-3 py-2 text-xs text-slate-300">
+      <p
+        role="status"
+        className="pointer-events-none absolute top-3 left-3 rounded bg-slate-900/90 px-3 py-2 text-xs text-slate-300"
+      >
         {mode === 'relation'
           ? relationDraft?.sourceTableId
             ? `FK: ${tables.find((table) => table.id === relationDraft.sourceTableId)?.physicalName} · 참조 대상 테이블을 클릭하세요 · Esc: 취소`

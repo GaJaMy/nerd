@@ -10,7 +10,7 @@ import {
 
 export function RelationEditor() {
   const store = useErdEditorStore()
-  const { mode, relationDraft, beginRelation, cancelRelation } =
+  const { mode, relationDraft, beginRelation, cancelRelation, cardinality } =
     useCanvasInteractionStore()
   const selected = store.project.relations.find(
     (relation) => relation.id === store.selectedRelationId,
@@ -26,7 +26,7 @@ export function RelationEditor() {
       <button
         type="button"
         className="rounded border px-3 py-2"
-        onClick={() => beginRelation()}
+        onClick={() => beginRelation(undefined, cardinality)}
       >
         관계 연결
       </button>
@@ -57,7 +57,7 @@ export function RelationEditor() {
       )}
       {mode !== 'relation' && sourceId && targetId && (
         <RelationForm
-          key={`${editing?.id ?? 'new'}:${sourceId}:${targetId}`}
+          key={`${editing?.id ?? 'new'}:${sourceId}:${targetId}:${cardinality}`}
           relation={editing}
           sourceId={sourceId}
           targetId={targetId}
@@ -107,6 +107,7 @@ function RelationForm({
   targetId: string
 }) {
   const store = useErdEditorStore()
+  const cardinality = useCanvasInteractionStore((state) => state.cardinality)
   const [mapping, setMapping] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       (relation?.sourceTableId === sourceId && relation.targetTableId === targetId
@@ -209,7 +210,7 @@ function RelationForm({
         <select
           className="block w-full rounded border p-2"
           name="cardinality"
-          defaultValue={relation?.cardinality ?? 'one-to-many'}
+          defaultValue={relation?.cardinality ?? cardinality}
         >
           <option value="one-to-many">일대다 (참조 대상 1 : FK 소유 N)</option>
           <option value="one-to-one">일대일</option>

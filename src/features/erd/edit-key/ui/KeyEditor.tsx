@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useErdEditorStore, type ErdTable } from '@/entities/erd/model'
+import { displayName } from '@/entities/erd/ui/display-name'
 
 export function KeyEditor({ table }: { table: ErdTable }) {
   const store = useErdEditorStore()
@@ -25,7 +26,7 @@ export function KeyEditor({ table }: { table: ErdTable }) {
               )
             }
           />{' '}
-          {column.physicalName}
+          {displayName(column, store.project.displayOptions)}
           {columnIds.includes(column.id)
             ? ` · PK ${columnIds.indexOf(column.id) + 1}`
             : ''}

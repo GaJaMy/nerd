@@ -17,8 +17,8 @@ describe('column and primary key editing', () => {
     await user.type(form.getByLabelText('컬럼 코멘트'), '고객 번호')
     await user.click(form.getByRole('button', { name: '컬럼 적용' }))
     const keyPanel = within(screen.getByRole('region', { name: '기본키 설정' }))
-    await user.click(keyPanel.getByLabelText('column_2'))
-    await user.click(keyPanel.getByLabelText('column_1'))
+    await user.click(keyPanel.getByLabelText(/column_2/))
+    await user.click(keyPanel.getByLabelText(/column_1/))
     await user.click(keyPanel.getByRole('button', { name: '기본키 적용' }))
     const project = useErdEditorStore.getState().project
     expect(project.keys[0]?.columnIds).toEqual(
