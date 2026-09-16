@@ -38,24 +38,24 @@ export function ErdTableCard({
       <header className={cn('grid border-b border-slate-600 bg-slate-800', nameColumns)}>
         {showLogical && (
           <div className="min-w-0 p-3">
-            <span className="mb-1 block text-xs text-slate-400">논리명</span>
             <ErdNameInput
               tableId={table.id}
               field="logicalName"
               label="캔버스 테이블 논리명"
               disabled={editingDisabled}
+              editOnDoubleClick
               dark
             />
           </div>
         )}
         {showPhysical && (
           <div className="min-w-0 p-3">
-            <span className="mb-1 block text-xs text-slate-400">물리명</span>
             <ErdNameInput
               tableId={table.id}
               field="physicalName"
               label="캔버스 테이블 물리명"
               disabled={editingDisabled}
+              editOnDoubleClick
               dark
             />
           </div>
@@ -64,15 +64,6 @@ export function ErdTableCard({
       {table.comment && displayOptions.showComment && (
         <p className="px-3 py-2 text-xs text-slate-400">{table.comment}</p>
       )}
-      <div
-        className={cn(
-          'grid border-b border-slate-700 px-3 py-2 text-xs text-slate-400',
-          nameColumns,
-        )}
-      >
-        {showLogical && <span>컬럼 논리명</span>}
-        {showPhysical && <span>컬럼 물리명</span>}
-      </div>
       <ul className="divide-y divide-slate-700">
         {table.columns.map((column) => (
           <li className="space-y-1 px-3 py-2" key={column.id}>
@@ -84,6 +75,7 @@ export function ErdTableCard({
                   field="logicalName"
                   label="캔버스 컬럼 논리명"
                   disabled={editingDisabled}
+                  editOnDoubleClick
                   dark
                 />
               )}
@@ -94,6 +86,7 @@ export function ErdTableCard({
                   field="physicalName"
                   label="캔버스 컬럼 물리명"
                   disabled={editingDisabled}
+                  editOnDoubleClick
                   dark
                 />
               )}

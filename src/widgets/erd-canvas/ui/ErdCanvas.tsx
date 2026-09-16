@@ -221,6 +221,7 @@ function ErdCanvasContent({
         panOnDrag={mode === 'pan' ? true : [1, 2]}
         nodesDraggable={mode !== 'relation'}
         selectionOnDrag={false}
+        zoomOnDoubleClick={false}
         colorMode="dark"
         edges={toErdRelationFlowEdges(tables, relations, selectedRelationId)}
         edgeTypes={edgeTypes}

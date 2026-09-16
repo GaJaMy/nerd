@@ -10,6 +10,7 @@ export function ErdNameInput({
   label,
   dark = false,
   disabled = false,
+  editOnDoubleClick = false,
 }: {
   tableId: string
   columnId?: string
@@ -17,6 +18,7 @@ export function ErdNameInput({
   label: string
   dark?: boolean
   disabled?: boolean
+  editOnDoubleClick?: boolean
 }) {
   const project = useErdEditorStore((state) => state.project)
   const table = project.tables.find((table) => table.id === tableId)
@@ -24,6 +26,7 @@ export function ErdNameInput({
   const value = item?.[field] ?? ''
   const [draft, setDraft] = useState({ base: value, value, error: '' })
   const composing = useRef(false)
+  const [active, setActive] = useState(false)
   const id = useId()
   const current = draft.base === value ? draft : { base: value, value, error: '' }
   const change = (next: string, composition = false) => {
@@ -46,6 +49,42 @@ export function ErdNameInput({
     if (columnId) state.updateColumn(tableId, columnId, update)
     else state.updateTable(tableId, update)
   }
+  const finish = () => {
+    composing.current = false
+    setDraft({ base: value, value, error: '' })
+    setActive(false)
+  }
+  const begin = () => {
+    setDraft({ base: value, value, error: '' })
+    setActive(true)
+  }
+  if (editOnDoubleClick && (!active || disabled)) {
+    return (
+      <button
+        type="button"
+        aria-label={label}
+        title={`${label} · 더블클릭하여 편집`}
+        disabled={disabled}
+        className="nodrag nopan block min-h-8 w-full cursor-default truncate rounded px-1 py-1 text-left text-sm text-slate-100 focus-visible:outline-2 focus-visible:outline-teal-400"
+        onClick={() => useErdEditorStore.getState().selectTable(tableId)}
+        onDoubleClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          begin()
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === 'F2') {
+            event.preventDefault()
+            event.stopPropagation()
+            useErdEditorStore.getState().selectTable(tableId)
+            begin()
+          }
+        }}
+      >
+        {value || '—'}
+      </button>
+    )
+  }
   return (
     <div className="min-w-0">
       <input
@@ -62,7 +101,11 @@ export function ErdNameInput({
         )}
         placeholder={field === 'logicalName' ? '논리명 입력' : '물리명 입력'}
         disabled={disabled}
+        autoFocus={editOnDoubleClick}
         value={current.value}
+        onBlur={() => {
+          if (editOnDoubleClick) finish()
+        }}
         onChange={(event) => change(event.target.value, composing.current)}
         onCompositionStart={() => {
           composing.current = true
@@ -73,9 +116,12 @@ export function ErdNameInput({
         }}
         onKeyDown={(event) => {
           event.stopPropagation()
+          if (composing.current || event.nativeEvent.isComposing) return
           if (event.key === 'Escape') {
-            composing.current = false
-            setDraft({ base: value, value, error: '' })
+            finish()
+          } else if (editOnDoubleClick && event.key === 'Enter') {
+            event.preventDefault()
+            finish()
           }
         }}
       />

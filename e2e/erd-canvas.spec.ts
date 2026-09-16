@@ -156,7 +156,7 @@ test('moves, hides, and focuses a table and resets volatile data on reload', asy
   const node = page.getByTestId('erd-table-node-table_1')
   const before = await node.boundingBox()
   if (!before) throw new Error('Table node is missing')
-  await page.mouse.move(before.x + 100, before.y + 20)
+  await page.mouse.move(before.x + 6, before.y + 6)
   await page.mouse.down()
   await page.mouse.move(before.x + 280, before.y + 140, { steps: 12 })
   await page.mouse.up()
@@ -199,7 +199,7 @@ test('keeps the canvas and editor usable on a narrow screen', async ({ page }) =
   await page.keyboard.press('Enter')
   await expect(
     page.getByTestId('erd-table-node-mobile_table').getByLabel('캔버스 컬럼 물리명'),
-  ).toHaveValue('column_1')
+  ).toHaveText('column_1')
   await page.screenshot({ path: 'test-results/erd-mobile.png', fullPage: true })
 })
 
@@ -263,11 +263,59 @@ test.describe('touch column creation', () => {
     await expect(add).not.toBeFocused()
     await expect(add).toHaveCSS('opacity', '1')
     await add.tap()
-    await expect(node.getByLabel('캔버스 컬럼 물리명')).toHaveValue('column_1')
+    await expect(node.getByLabel('캔버스 컬럼 물리명')).toHaveText('column_1')
     await expect(
       page
         .getByRole('region', { name: '컬럼 편집' })
         .getByLabel('컬럼 물리명', { exact: true }),
     ).toHaveValue('column_1')
   })
+})
+
+test('selects on a single click and edits each canvas name on double click without zooming', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await drawTable(page)
+  const canvas = page.getByTestId('erd-canvas')
+  const viewport = await page.locator('.react-flow__viewport').getAttribute('style')
+  const details = page.getByRole('complementary', { name: '테이블 상세 패널' })
+  await canvas.getByLabel('캔버스 테이블 논리명').click()
+  await expect(canvas.getByRole('textbox')).toHaveCount(0)
+  await expect(details.getByLabel('테이블 물리명', { exact: true })).toHaveValue(
+    'table_1',
+  )
+  await canvas.getByLabel('캔버스 테이블 논리명').dblclick()
+  await canvas.getByRole('textbox', { name: '캔버스 테이블 논리명' }).fill('회원')
+  await page.keyboard.press('Enter')
+  await expect(details.getByLabel('테이블 논리명', { exact: true })).toHaveValue('회원')
+  await canvas.getByLabel('캔버스 테이블 물리명').dblclick()
+  await canvas.getByRole('textbox', { name: '캔버스 테이블 물리명' }).fill('members')
+  await details.getByRole('heading', { name: '테이블 상세' }).click()
+  await expect(canvas.getByLabel('캔버스 테이블 물리명')).toHaveText('members')
+  await expect(page.locator('.react-flow__viewport')).toHaveAttribute('style', viewport!)
+  await canvas.getByTestId('column-add-area').hover()
+  await canvas.getByRole('button', { name: '컬럼 추가' }).click()
+  await canvas.getByLabel('캔버스 컬럼 논리명').dblclick()
+  await canvas.getByRole('textbox', { name: '캔버스 컬럼 논리명' }).fill('회원번호')
+  await page.keyboard.press('Enter')
+  await canvas.getByLabel('캔버스 컬럼 물리명').dblclick()
+  await canvas.getByRole('textbox', { name: '캔버스 컬럼 물리명' }).fill('member_id')
+  await page.keyboard.press('Enter')
+  await expect(details.getByLabel('컬럼 물리명', { exact: true })).toHaveValue(
+    'member_id',
+  )
+  await canvas.getByLabel('캔버스 컬럼 물리명').dblclick()
+  await canvas.getByRole('textbox', { name: '캔버스 컬럼 물리명' }).fill('!invalid')
+  await expect(canvas.getByRole('alert')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(canvas.getByLabel('캔버스 컬럼 물리명')).toHaveText('member_id')
+  for (const label of ['논리명', '물리명', '컬럼 논리명', '컬럼 물리명']) {
+    await expect(canvas.getByText(label, { exact: true })).toHaveCount(0)
+  }
+  await page.getByRole('button', { name: '논리명 표시', exact: true }).click()
+  await expect(details.getByLabel('테이블 물리명', { exact: true })).toHaveCount(0)
+  await expect(canvas.getByLabel('캔버스 테이블 물리명')).toHaveCount(0)
+  await page.getByRole('button', { name: '논리·물리 모두 표시' }).click()
+  await page.screenshot({ path: 'test-results/erd-details.png', fullPage: true })
 })

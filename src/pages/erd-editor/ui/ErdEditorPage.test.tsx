@@ -27,7 +27,7 @@ describe('ErdEditorPage', () => {
 
     expect(tableNode).toBeInTheDocument()
     expect(screen.getByText('테이블 1개')).toBeInTheDocument()
-    expect(within(tableNode).getByDisplayValue('table_1')).toBeInTheDocument()
+    expect(within(tableNode).getByText('table_1')).toBeInTheDocument()
   })
 
   it('edits table metadata, rejects duplicate names, and confirms deletion', async () => {
