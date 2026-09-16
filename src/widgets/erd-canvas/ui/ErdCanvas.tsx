@@ -169,7 +169,10 @@ function ErdCanvasContent({
         event.preventDefault()
         event.stopPropagation()
         const rect = event.currentTarget.getBoundingClientRect()
-        const point = { x: event.clientX - rect.left, y: event.clientY - rect.top }
+        const point = {
+          x: event.clientX - rect.left - event.currentTarget.clientLeft,
+          y: event.clientY - rect.top - event.currentTarget.clientTop,
+        }
         event.currentTarget.setPointerCapture(event.pointerId)
         setDrawing({ start: point, end: point, pointerId: event.pointerId })
       }}
@@ -178,7 +181,10 @@ function ErdCanvasContent({
         const rect = event.currentTarget.getBoundingClientRect()
         setDrawing({
           ...drawing,
-          end: { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          end: {
+            x: event.clientX - rect.left - event.currentTarget.clientLeft,
+            y: event.clientY - rect.top - event.currentTarget.clientTop,
+          },
         })
       }}
       onPointerUp={(event) => {
@@ -186,7 +192,10 @@ function ErdCanvasContent({
         const rect = event.currentTarget.getBoundingClientRect()
         const result = getDrawnTable(
           drawing.start,
-          { x: event.clientX - rect.left, y: event.clientY - rect.top },
+          {
+            x: event.clientX - rect.left - event.currentTarget.clientLeft,
+            y: event.clientY - rect.top - event.currentTarget.clientTop,
+          },
           viewport,
         )
         setDrawing(null)
@@ -262,24 +271,20 @@ function ErdCanvasContent({
             ? '드래그: 테이블 그리기 · 가운데/오른쪽 드래그: 이동 · Esc: 취소'
             : '빈 공간을 드래그해 화면 이동'}
       </p>
-      {drawing && mode === 'draw' && (
-        <div
-          data-testid="table-drawing-preview"
-          className="pointer-events-none absolute rounded border-2 border-dashed border-teal-300 bg-teal-400/10"
-          style={{
-            left: Math.min(drawing.start.x, drawing.end.x),
-            top: Math.min(drawing.start.y, drawing.end.y),
-            width: Math.max(
-              360 * viewport.zoom,
-              Math.abs(drawing.end.x - drawing.start.x),
-            ),
-            height: Math.max(
-              140 * viewport.zoom,
-              Math.abs(drawing.end.y - drawing.start.y),
-            ),
-          }}
-        />
-      )}
+      {drawing &&
+        mode === 'draw' &&
+        (drawing.end.x !== drawing.start.x || drawing.end.y !== drawing.start.y) && (
+          <div
+            data-testid="table-drawing-preview"
+            className="pointer-events-none absolute rounded border-2 border-dashed border-teal-300 bg-teal-400/10"
+            style={{
+              left: Math.min(drawing.start.x, drawing.end.x),
+              top: Math.min(drawing.start.y, drawing.end.y),
+              width: Math.abs(drawing.end.x - drawing.start.x),
+              height: Math.abs(drawing.end.y - drawing.start.y),
+            }}
+          />
+        )}
     </section>
   )
 }

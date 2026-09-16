@@ -58,6 +58,32 @@ test('adds a table to the ERD canvas', async ({ page }) => {
   ).toBeVisible()
 })
 
+test('resizes the drawing preview in both directions before applying the minimum table size', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const canvas = (await page.getByTestId('erd-canvas').boundingBox())!
+  const start = { x: canvas.x + 180, y: canvas.y + 180 }
+  const preview = page.getByTestId('table-drawing-preview')
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await expect(preview).toHaveCount(0)
+  await page.mouse.move(start.x + 30, start.y + 20)
+  await expect(preview).toHaveCSS('width', '30px')
+  await expect(preview).toHaveCSS('height', '20px')
+  await page.mouse.move(start.x + 100, start.y + 80)
+  await expect(preview).toHaveCSS('width', '100px')
+  await expect(preview).toHaveCSS('height', '80px')
+  await page.mouse.move(start.x - 70, start.y - 50)
+  await expect(preview).toHaveCSS('width', '70px')
+  const box = (await preview.boundingBox())!
+  expect(box.x).toBeCloseTo(start.x - 70, 0)
+  expect(box.y).toBeCloseTo(start.y - 50, 0)
+  await page.mouse.up()
+  await expect(preview).toHaveCount(0)
+  await expect(page.getByTestId('erd-table-node-table_1')).toHaveCSS('width', '360px')
+})
+
 test('designs a composite relation and downloads MySQL DDL', async ({ page }) => {
   await page.goto('/')
   for (const name of ['parents', 'children']) {
